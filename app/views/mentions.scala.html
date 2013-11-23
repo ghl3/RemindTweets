@@ -1,0 +1,17 @@
+@(mentions: Iterator[twitter4j.Status])
+
+@import helpers._
+@import twitter4j.{ResponseList,Status}
+
+@main("Mentions") {
+
+<ul>
+    @mentions.map { mention =>
+    <li>
+        @mention.getUser.getScreenName @mention.getText
+    </li>
+    }
+</ul>
+
+
+}

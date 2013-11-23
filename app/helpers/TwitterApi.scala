@@ -7,12 +7,20 @@ import twitter4j.conf.{ConfigurationBuilder, Configuration}
 object TwitterApi {
 
 
+  def getConfigVariableFromEnv: Map[String,String] = {
+    Map("consumerKey" -> System.getenv("twitter4j_oauth_consumerKey"),
+      "consumerSecret" -> System.getenv("twitter4j_oauth_consumerSecret"),
+      "accessToken" -> System.getenv("twitter4j_oauth_accessToken"),
+      "accessTokenSecret" -> System.getenv("twitter4j_oauth_accessTokenSecret"))
+  }
+
   def getConfig: Configuration = {
+    val vars = getConfigVariableFromEnv
     new twitter4j.conf.ConfigurationBuilder()
-      .setOAuthConsumerKey("[your consumer key here]")
-      .setOAuthConsumerSecret("[your consumer secret here]")
-      .setOAuthAccessToken("[your access token here]")
-      .setOAuthAccessTokenSecret("[your access token secret here]")
+      .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
+      .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
+      .setOAuthAccessToken(vars.getOrElse("accessToken", null))
+      .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
       .build()
   }
 
@@ -48,6 +56,10 @@ object TwitterApi {
 
   def getMentions = {
     getTwitter.getMentionsTimeline
+  }
+
+  def getHomeTimeline = {
+   getTwitter.getHomeTimeline
   }
 
 

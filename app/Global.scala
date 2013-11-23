@@ -1,17 +1,18 @@
 import play.{Logger, GlobalSettings}
 
-import helpers.Twitter
+import helpers.TwitterApi
 
 class Global extends GlobalSettings {
 
   @Override
-  def onStart(app: Application) {
+  def onStart(app: App) {
     Logger.info("Application has started")
-    Twitter.startListener()
+    Logger.info("Getting Mentions")
+    Logger.info("Mentions: %s", TwitterApi.getMentions)
   }
 
   @Override
-  def onStop(app: Application) {
+  def onStop(app: App) {
     Logger.info("Application shutdown...")
   }
 
