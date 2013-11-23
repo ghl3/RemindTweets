@@ -8,8 +8,8 @@ libraryDependencies ++= Seq(
   cache
 )
 
-play.Project.playScalaSettings
-
-
-
 libraryDependencies += "org.twitter4j" % "twitter4j-stream" % "3.0.3"
+
+libraryDependencies +=   "postgresql" % "postgresql" % "8.4-702.jdbc4"
+
+play.Project.playScalaSettings

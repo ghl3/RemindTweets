@@ -2,24 +2,22 @@ package helpers
 
 import twitter4j._
 
+import twitter4j.conf.Configuration
 
-class Twitter {
+object Twitter {
 
-
-  def getConfig() {
+  def getConfig: Configuration = {
     new twitter4j.conf.ConfigurationBuilder()
       .setOAuthConsumerKey("[your consumer key here]")
       .setOAuthConsumerSecret("[your consumer secret here]")
       .setOAuthAccessToken("[your access token here]")
       .setOAuthAccessTokenSecret("[your access token secret here]")
-      .build
+      .build()
   }
 
-
   def updateStatus(text: String) {
-    val twitter = TwitterFactory.getSingleton();
-    val status = twitter.updateStatus(text);
-    return status
+    val twitter = TwitterFactory.getSingleton
+    twitter.updateStatus(text)
   }
 
   /*
@@ -54,8 +52,7 @@ class Twitter {
     def onScrubGeo(p1: Long, p2: Long) {}
   }
 
-
-  def streaming() {
+  def startListener() {
 
     val twitterStream = new TwitterStreamFactory().getInstance()
     twitterStream.addListener(new TweetListener((status: Status) => {
@@ -67,7 +64,6 @@ class Twitter {
     // which manipulates TwitterStream
     // and calls these adequate listener methods continuously.
     twitterStream.sample()
-
 
   }
 
