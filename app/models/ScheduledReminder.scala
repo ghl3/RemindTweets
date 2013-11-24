@@ -17,7 +17,7 @@ import play.api.Play.current
  * @param time
  * @param executed
  */
-case class ScheduledReminder(id: Option[Long], reminderId: Long,
+case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long,
                              time: LocalDateTime, executed: Boolean, cancelled: Boolean)
 
 
@@ -26,19 +26,20 @@ object ScheduledReminders extends Table[ScheduledReminder]("scheduledreminders")
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def reminderId = column[Long]("reminderid", O.NotNull)
+  def userId = column[Long]("userid", O.NotNull)
   def time = column[LocalDateTime]("time")
   def executed = column[Boolean]("executed")
   def cancelled = column[Boolean]("cancelled")
 
 
-  def * : ColumnBase[ScheduledReminder] = (id.? ~ reminderId ~ time ~ executed ~ cancelled) <> (ScheduledReminder .apply _, ScheduledReminder.unapply _)
+  def * : ColumnBase[ScheduledReminder] = (id.? ~ reminderId ~ userId ~time ~ executed ~ cancelled) <> (ScheduledReminder .apply _, ScheduledReminder.unapply _)
 
   // These are both necessary for auto increment to work with psql
-  def autoInc =  reminderId ~ time ~ executed ~ cancelled returning id
+  def autoInc =  reminderId ~ userId ~time ~ executed ~ cancelled returning id
 
   def addToTable(reminder: ScheduledReminder): ScheduledReminder = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = ScheduledReminders.autoInc.insert(reminder.reminderId, reminder.time, reminder.executed, reminder.cancelled)
+      val id = ScheduledReminders.autoInc.insert(reminder.reminderId, reminder.userId, reminder.time, reminder.executed, reminder.cancelled)
       return fetch(id).get
     }
   }

@@ -7,7 +7,16 @@ import play.api.Play.current
 
 case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
                     repeat: String, firstTime: LocalDateTime,
-                    request: String, content: String)
+                    request: String, content: String) {
+
+
+  def getScheduledReminders: List[ScheduledReminder] = {
+    play.api.db.slick.DB.withSession{implicit session: Session =>
+      return (for { b <- ScheduledReminders if b.reminderId is this.id} yield b).list
+    }
+  }
+
+}
 
 
 // Definition of the COFFEES table
@@ -46,6 +55,7 @@ object Reminders extends Table[Reminder]("reminders") {
       (for { b <- Reminders if b.id is id} yield b).firstOption
     }
   }
+
 
 }
 

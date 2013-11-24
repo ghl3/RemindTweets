@@ -18,7 +18,7 @@ import play.Logger
 // http://java.dzone.com/articles/getting-started-play-21-scala
 
 // TODO: Convert to DateTime
-case class Tweet(id: Option[Long], twitterId: Long, content: JValue, fetchedAt: LocalDateTime) {
+case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content: JValue, fetchedAt: LocalDateTime) {
 
   // Convert the internal json4s object to a string
   def jsonString(): String = {
@@ -52,7 +52,7 @@ object Tweet {
 
     Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
     val json: org.json4s.JValue = JsonMethods.parse(statusJson)
-    return Tweet(None, status.getId, json, now)
+    return Tweet(None, status.getId, status.getUser.getScreenName, json, now)
   }
 
 }
@@ -63,18 +63,19 @@ object Tweets extends Table[Tweet]("tweets") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
   def twitterId = column[Long]("twitterid", O.NotNull)
+  def screenName = column[String]("screenName", O.NotNull)
   def content = column[JValue]("content")
   def fetchedAt = column[LocalDateTime]("fetchedat")
 
-  def * : ColumnBase[Tweet] = (id.? ~ twitterId ~ content ~ fetchedAt) <> (Tweet .apply _, Tweet.unapply _)
+  def * : ColumnBase[Tweet] = (id.? ~ twitterId ~ screenName ~ content ~ fetchedAt) <> (Tweet .apply _, Tweet.unapply _)
 
   // These are both necessary for auto increment to work with psql
-  def autoInc = twitterId ~ content ~ fetchedAt returning id
+  def autoInc = twitterId ~ screenName ~ content ~ fetchedAt returning id
 
 
   def addToTable(tweet: Tweet): Tweet = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = Tweets.autoInc.insert(tweet.twitterId, tweet.content, tweet.fetchedAt)
+      val id = Tweets.autoInc.insert(tweet.twitterId, tweet.screenName, tweet.content, tweet.fetchedAt)
       return fetch(id).get
     }
   }

@@ -5,7 +5,21 @@ import app.MyPostgresDriver.simple._
 import scala.slick.lifted._
 import play.api.Play.current
 
-case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime)
+case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
+
+  def getReminders: List[Reminder] = {
+    play.api.db.slick.DB.withSession{implicit session: Session =>
+      return (for { b <- Reminders if b.userId is this.id} yield b).list
+    }
+  }
+
+  def getScheduledReminders: List[ScheduledReminder] = {
+    play.api.db.slick.DB.withSession{implicit session: Session =>
+      return (for { b <- ScheduledReminders if b.userId is this.id} yield b).list
+    }
+  }
+
+}
 
 
 // Definition of the COFFEES table

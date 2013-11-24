@@ -39,7 +39,7 @@ object Application extends Controller {
 
   def addTweet = Action {
     val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    val tweet: Tweet = Tweet(None, 999L, myVal, LocalDateTime.now())
+    val tweet: Tweet = Tweet(None, 999L, "MrDood", myVal, LocalDateTime.now())
     val id: Long = Tweets.addToTable(tweet).id.get
     Ok(views.html.index("Created Tweet: $id"))
   }
