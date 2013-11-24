@@ -5,8 +5,7 @@ import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
 import org.json4s.JValue
 
-//import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.lifted.ColumnBase
+import scala.slick.lifted._
 
 // SEE: https://github.com/ThomasAlexandre/slickcrudsample/
 // http://java.dzone.com/articles/getting-started-play-21-scala
@@ -23,6 +22,12 @@ object Tweets extends Table[Tweet]("tweet") {
 
   def * : ColumnBase[Tweet] = (id.? ~ content ~ fetchedAt) <> (Tweet .apply _, Tweet.unapply _)
 
+  def autoInc = content ~ fetchedAt returning id
+
+  def add(json: JValue, fetchedAt: LocalDateTime)(implicit s:Session): Long = {
+    Tweets.autoInc.insert(json, fetchedAt)
+  }
+
   // Create a new instance
-  def create(content: JValue, fetchedAt: LocalDateTime = LocalDateTime.now()) =  Tweet(Option(15L), content, fetchedAt)
+  def create(content: JValue, fetchedAt: LocalDateTime=LocalDateTime.now()) = Tweet(Option(15L), content, fetchedAt)
 }

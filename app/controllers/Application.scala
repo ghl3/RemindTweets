@@ -14,6 +14,7 @@ import org.json4s.native.JsonMethods
 
 import play.api.db.slick.Config.driver.simple._
 
+import org.joda.time.LocalDateTime
 
 
 object Application extends Controller {
@@ -40,10 +41,8 @@ object Application extends Controller {
 
     val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
 
-
     play.api.db.slick.DB.withSession{implicit session: Session =>
-      val tweet = Tweets.create(myVal) //Tweet(Option(0L), myVal, DateTime.now().toLocalDateTime)
-      Tweets.insert(tweet)
+      Tweets.add(myVal, LocalDateTime.now())
     }
 
     Ok(views.html.index("Your new application is ready."))
