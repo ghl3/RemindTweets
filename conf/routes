@@ -8,7 +8,9 @@ GET     /                           controllers.Application.index
 # Mentions
 GET     /mentions                   controllers.Application.mentions
 
-GET     /addCoffee                  controllers.Application.addCoffee
+POST     /tweet                     controllers.Application.addTweet
+GET      /tweet                     controllers.Application.getTweet(id: Long)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
