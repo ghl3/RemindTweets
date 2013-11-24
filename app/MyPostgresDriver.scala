@@ -1,7 +1,7 @@
 package app
 
 
-import slick.driver.PostgresDriver
+import scala.slick.driver.PostgresDriver
 import com.github.tminglei.slickpg._
 
 trait MyPostgresDriver extends PostgresDriver

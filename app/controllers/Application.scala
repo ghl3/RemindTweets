@@ -1,9 +1,20 @@
 package controllers
 
+import play.api.Play.current
+
 import play.Logger
 import play.api.mvc.{Controller, Action}
 import helpers.TwitterApi
 import scala.collection.JavaConverters._
+
+
+import models.{Tweet, Tweets}
+import org.json4s._
+import org.json4s.native.JsonMethods
+
+import play.api.db.slick.Config.driver.simple._
+
+
 
 object Application extends Controller {
 
@@ -23,5 +34,34 @@ object Application extends Controller {
     val mentionList = TwitterApi.getMentions.listIterator.asScala
     Ok(views.html.mentions(mentionList))
   }
+
+
+  def addCoffee = Action {
+
+    val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
+
+
+    play.api.db.slick.DB.withSession{implicit session: Session =>
+      val tweet = Tweets.create(myVal) //Tweet(Option(0L), myVal, DateTime.now().toLocalDateTime)
+      Tweets.insert(tweet)
+    }
+
+    Ok(views.html.index("Your new application is ready."))
+  }
+
+
+  /*
+  def test = Action {
+
+    def instance = Action {
+      Database.forDataSource(DB.getDataSource()) withSession {
+        val q = Retailer.map(_.name)
+        Ok(views.html.instance(q.list, newRForm))
+      }
+    }
+
+
+  }
+  */
 
 }
