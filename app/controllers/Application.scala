@@ -1,11 +1,9 @@
 package controllers
 
-
 import play.Logger
 import play.api.mvc.{Controller, Action}
 import helpers.TwitterApi
 import scala.collection.JavaConverters._
-
 
 import models.{Tweet, Tweets}
 import org.json4s._
@@ -29,7 +27,8 @@ object Application extends Controller {
     Logger.info("Mentions: %s".format(mentions))
 
     mentions.foreach({(status: twitter4j.Status) =>
-      val tweet = Tweet.fromStatus(status)
+      var tweet = Tweet.fromStatus(status)
+      tweet = Tweets.addToTable(tweet)
       Logger.info("Tweet: %s %s".format(tweet.id, tweet.jsonString))
     })
 
@@ -40,7 +39,8 @@ object Application extends Controller {
 
   def addTweet = Action {
     val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    val id: Long = Tweets.create(myVal, LocalDateTime.now()).id.get
+    val tweet: Tweet = Tweet(None, 999L, myVal, LocalDateTime.now())
+    val id: Long = Tweets.addToTable(tweet).id.get
     Ok(views.html.index("Created Tweet: $id"))
   }
 
