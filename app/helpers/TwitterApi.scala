@@ -21,6 +21,7 @@ object TwitterApi {
       .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
       .setOAuthAccessToken(vars.getOrElse("accessToken", null))
       .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
+      .setJSONStoreEnabled(true)
       .build()
   }
 

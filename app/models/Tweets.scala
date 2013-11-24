@@ -5,6 +5,7 @@ import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
 import org.json4s.{jsonwritable, JValue}
 import org.json4s.native.Serialization.write
+import org.json4s.native.JsonMethods
 
 import twitter4j.Status
 
@@ -45,6 +46,21 @@ case class Tweet(id: Option[Long], content: JValue, fetchedAt: LocalDateTime) {
 
 }
 
+
+object Tweet {
+
+  def fromStatus(status: twitter4j.Status): Tweet = {
+    val now = LocalDateTime.now()
+    val statusJson: String = twitter4j.json.DataObjectFactory.getRawJSON(status)
+
+    Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
+    val json: org.json4s.JValue = JsonMethods.parse(statusJson)
+    return Tweets.create(json, now)
+  }
+
+}
+
+
 // Definition of the COFFEES table
 object Tweets extends Table[Tweet]("tweet") {
 
@@ -57,18 +73,18 @@ object Tweets extends Table[Tweet]("tweet") {
   // These are both necessary for auto increment to work with psql
   def autoInc = content ~ fetchedAt returning id
 
-  def add(json: JValue, fetchedAt: LocalDateTime): Long = {
+  def create(json: JValue, fetchedAt: LocalDateTime): Tweet = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
-      Tweets.autoInc.insert(json, fetchedAt)
+      val id = Tweets.autoInc.insert(json, fetchedAt)
+      return fetch(id).get
     }
   }
 
-  def fetch(id: Long): Tweet = {
+
+  def fetch(id: Long): Option[Tweet] = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
-      (for { b <- Tweets if b.id is id} yield b).first
+      (for { b <- Tweets if b.id is id} yield b).firstOption
     }
   }
 
-  // Create a new instance
-  //def create(content: JValue, fetchedAt: LocalDateTime=LocalDateTime.now()) = Tweet(Option(15L), content, fetchedAt)
 }

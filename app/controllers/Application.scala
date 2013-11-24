@@ -25,23 +25,27 @@ object Application extends Controller {
 
     Logger.info("Getting status for {} {}", TwitterApi.getTwitter.getScreenName, TwitterApi.getTwitter.getId: java.lang.Long)
 
-    for (status: twitter4j.Status <- TwitterApi.getHomeTimeline.asScala) {
-      Logger.info("Status: {}", status.getUser)
-    }
-    Logger.info("getMentions: {}", TwitterApi.getMentions.toString)
-    val mentionList = TwitterApi.getMentions.listIterator.asScala
-    Ok(views.html.mentions(mentionList))
+    val mentions = TwitterApi.getMentions.asScala.iterator
+    Logger.info("Mentions: %s".format(mentions))
+
+    mentions.foreach({(status: twitter4j.Status) =>
+      val tweet = Tweet.fromStatus(status)
+      Logger.info("Tweet: %s %s".format(tweet.id, tweet.jsonString))
+    })
+
+    Logger.info("Putting into mentions")
+    Ok(views.html.mentions(mentions))
   }
 
 
   def addTweet = Action {
     val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    val id: Long = Tweets.add(myVal, LocalDateTime.now())
+    val id: Long = Tweets.create(myVal, LocalDateTime.now()).id.get
     Ok(views.html.index("Created Tweet: $id"))
   }
 
   def getTweet(id: Long) = Action {
-    val tweet = Tweets.fetch(id).getStatus
+    val tweet = Tweets.fetch(id).get.getStatus
     Ok(views.html.index("Created Tweet: %s".format(tweet.toString)))
   }
 
