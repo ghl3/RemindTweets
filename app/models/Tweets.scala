@@ -7,6 +7,9 @@ import org.json4s.JValue
 
 import scala.slick.lifted._
 
+import play.api.Play.current
+
+
 // SEE: https://github.com/ThomasAlexandre/slickcrudsample/
 // http://java.dzone.com/articles/getting-started-play-21-scala
 
@@ -24,8 +27,10 @@ object Tweets extends Table[Tweet]("tweet") {
 
   def autoInc = content ~ fetchedAt returning id
 
-  def add(json: JValue, fetchedAt: LocalDateTime)(implicit s:Session): Long = {
-    Tweets.autoInc.insert(json, fetchedAt)
+  def add(json: JValue, fetchedAt: LocalDateTime): Long = {
+    play.api.db.slick.DB.withSession{implicit session: Session =>
+      Tweets.autoInc.insert(json, fetchedAt)
+    }
   }
 
   // Create a new instance
