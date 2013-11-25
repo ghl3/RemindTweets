@@ -135,7 +135,7 @@ object Reminders extends Table[Reminder]("reminders") {
   def userId = column[Long]("userid", O.NotNull)
   def createdAt = column[LocalDateTime]("createdat")
   def repeat = column[String]("repeat")
-  def firstTime = column[LocalDateTime]("firsttime}")
+  def firstTime = column[LocalDateTime]("firsttime")
   def request = column[String]("request")
   def content = column[String]("content")
 
@@ -145,10 +145,12 @@ object Reminders extends Table[Reminder]("reminders") {
   // These are both necessary for auto increment to work with psql
   def autoInc =  userId ~ createdAt ~ repeat ~ firstTime ~ request ~ content returning id
 
-  def addToTable(reminder: Reminder): Reminder = {
+  def addToTable(reminder: Reminder): Long = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
+      Logger.info("Adding reminder to table: {}", reminder)
       val id = Reminders.autoInc.insert(reminder.userId, reminder.createdAt, reminder.repeat, reminder.firstTime, reminder.request, reminder.content)
-      return fetch(id).get
+      return id
+      //return fetch(id).get
     }
   }
 
@@ -160,6 +162,7 @@ object Reminders extends Table[Reminder]("reminders") {
   }
 
   def fetch(id: Long): Option[Reminder] = {
+    Logger.info("Looking for reminder with id: {}", id.toString)
     play.api.db.slick.DB.withSession{implicit session: Session =>
       (for { b <- Reminders if b.id is id} yield b).firstOption
     }
