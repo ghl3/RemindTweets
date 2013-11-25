@@ -23,13 +23,11 @@ object ReminderCreation {
       }
     }
     else {
-
     }
 
     var tweet = Tweet.fromStatus(status)
     tweet = Tweets.addToTable(tweet)
     Logger.info("Tweet: {} {}", tweet.id, tweet.jsonString)
-
   }
 
 
