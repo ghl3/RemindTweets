@@ -2,7 +2,8 @@ package helpers
 
 import twitter4j._
 
-import twitter4j.conf.{ConfigurationBuilder, Configuration}
+import twitter4j.conf.Configuration
+
 
 object TwitterApi {
 
@@ -26,9 +27,6 @@ object TwitterApi {
   }
 
 
-  def createStatusFromJsonString(jsonString: String): twitter4j.Status = {
-    return twitter4j.json.DataObjectFactory.createStatus(jsonString)
-  }
 
   def getTwitter: Twitter = {
     val tf = new TwitterFactory(getConfig)
