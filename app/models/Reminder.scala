@@ -50,7 +50,7 @@ object Reminder {
       // TODO: Fuck this shit!
       //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+) (every (.+))?", "to", "action", "time", "every", "repeat")
       //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) on (.+) (every (.+))?")
-      val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+)", "to", "action", "time")
+      val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+)", "to", "request", "time")
 
       Logger.info("Checking text: {}", text)
 
@@ -64,7 +64,7 @@ object Reminder {
 
       val groups = result.get
 
-      val action = groups.group("action")
+      val action = groups.group("request")
       val time = LocalDateTime.parse(groups.group("time"))
 
       return Option(Parsed("NEVER", time, action))

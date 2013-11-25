@@ -13,15 +13,22 @@ class TestMentions extends Specification {
     Reminder.isReminder(status) must equalTo(true)
   }
 
-  "Properly Parsed" in {
+  val textA = "@RemindTweets Remind Me to eat cereal at 2013-12-01"
 
-    val textA = "@RemindTweets Remind Me to eat cereal at 2013-12-01"
+  "Properly Parsed A" in {
     val parsed = Reminder.parseStatusText(textA)
     parsed mustNotEqual(None)
     parsed.get.repeat must equalTo("NEVER")
     parsed.get.firstTime must equalTo(LocalDateTime.parse("2013-12-01"))
     parsed.get.request must equalTo("eat cereal")
-
     }
+
+  "Created Reminder A" in {
+    val status = twitter4j.json.DataObjectFactory.createStatus(testString)
+    val reminder = Reminder.createReminder(status)
+    reminder.isDefined mustNotEqual(None)
+    reminder.get.request must equalTo("fish")
+    reminder.get.firstTime must equalTo(LocalDateTime.parse("2013-12-01"))
+  }
 
 }
