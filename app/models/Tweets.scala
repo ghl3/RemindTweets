@@ -24,6 +24,7 @@ import helpers.Converters
 // http://java.dzone.com/articles/getting-started-play-21-scala
 
 // TODO: Convert to DateTime
+// TODO: Remove the JValue as a member.  Should only take a Status, store that, and convet it to JValue for database persistence
 case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content: JValue, fetchedAt: LocalDateTime) {
 
   // We internally store a twitter4j object
@@ -61,7 +62,7 @@ object Tweet {
 
   def fromStatus(status: twitter4j.Status): Tweet = {
     val now = LocalDateTime.now()
-    val statusJson: String = Converters.getJsonFromStatus(status)
+    val statusJson: String = Converters.getJsonStringFromStatus(status)
 
     Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
     val json: org.json4s.JValue = JsonMethods.parse(statusJson)

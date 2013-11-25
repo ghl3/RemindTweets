@@ -15,7 +15,7 @@ with PgPostGISSupport {
 
   /// for json support
   type DOCType = text.Document
-  override val jsonMethods =  org.json4s.native.JsonMethods
+  override val jsonMethods = org.json4s.native.JsonMethods
 
   ///
   override val Implicit = new ImplicitsPlus {}
