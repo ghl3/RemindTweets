@@ -5,6 +5,7 @@ import app.MyPostgresDriver.simple._
 import scala.slick.lifted._
 import play.api.Play.current
 
+// TODO: Add twitterid
 case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
 
   def getReminders: List[Reminder] = {
@@ -18,6 +19,19 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
       return (for { b <- ScheduledReminders if b.userId is this.id} yield b).list
     }
   }
+
+}
+
+object User {
+
+  def createUser(user: twitter4j.User): User = {
+    return new User(None, user.getScreenName, LocalDateTime.now())
+  }
+
+ def isNewUser(user: twitter4j.User): Boolean = {
+   return false
+ }
+
 
 }
 
