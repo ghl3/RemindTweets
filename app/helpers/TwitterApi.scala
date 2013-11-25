@@ -26,6 +26,10 @@ object TwitterApi {
   }
 
 
+  def createStatusFromJsonString(jsonString: String): twitter4j.Status = {
+    return twitter4j.json.DataObjectFactory.createStatus(jsonString)
+  }
+
   def getTwitter: Twitter = {
     val tf = new TwitterFactory(getConfig)
     tf.getInstance()
