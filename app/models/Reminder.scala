@@ -6,6 +6,8 @@ import play.api.Play.current
 import play.Logger
 import scala.util.matching.Regex
 
+import helpers.Database.getDatabase
+
 import scala.slick.lifted._
 
 
@@ -21,15 +23,17 @@ import scala.slick.lifted._
  */
 case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
                     repeat: String, firstTime: LocalDateTime,
-                    request: String, content: String) {
+                    request: String, content: String) /*{
+
 
   def getScheduledReminders: List[ScheduledReminder] = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
+    getDatabase().withSession{implicit session: Session =>
       return (for { b <- ScheduledReminders if b.reminderId is this.id} yield b).list
     }
   }
 
-}
+
+}*/
 
 object Reminder {
 
@@ -129,7 +133,7 @@ object Reminder {
 
 
 // Definition of the COFFEES table
-object Reminders extends Table[Reminder]("reminders") {
+class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def userId = column[Long]("userid", O.NotNull)
@@ -139,8 +143,7 @@ object Reminders extends Table[Reminder]("reminders") {
   def request = column[String]("request")
   def content = column[String]("content")
 
-
-  def * : ColumnBase[Reminder] = (id.? ~ userId ~ createdAt ~ repeat ~ firstTime ~ request ~ content) <> (Reminder .apply _, Reminder.unapply _)
+  def * : ColumnBase[Reminder] = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply)
 
   // These are both necessary for auto increment to work with psql
   def autoInc =  userId ~ createdAt ~ repeat ~ firstTime ~ request ~ content returning id

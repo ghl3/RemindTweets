@@ -3,22 +3,15 @@ package models
 import org.joda.time.LocalDateTime
 
 import app.MyPostgresDriver.simple._
-import org.json4s.JValue
 import org.json4s.native.Serialization.write
 import org.json4s.native.JsonMethods
 
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
-
 import scala.slick.lifted._
 
-import play.api.Play.current
-
 import play.Logger
-import helpers.TwitterApi
 import helpers.Converters
-
-
+import helpers.Database.getDatabase
 
 // SEE: https://github.com/ThomasAlexandre/slickcrudsample/
 // http://java.dzone.com/articles/getting-started-play-21-scala
@@ -74,7 +67,7 @@ object Tweet {
 
 
 // Definition of the COFFEES table
-object Tweets extends Table[Tweet]("tweets") {
+class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
   def twitterId = column[Long]("twitterid", O.NotNull)
@@ -82,14 +75,15 @@ object Tweets extends Table[Tweet]("tweets") {
   def content = column[JValue]("content")
   def fetchedAt = column[LocalDateTime]("fetchedat")
 
-  def * : ColumnBase[Tweet] = (id.? ~ twitterId ~ screenName ~ content ~ fetchedAt) <> (Tweet .apply _, Tweet.unapply _)
+  def * = (id.?, twitterId, screenName, content, fetchedAt)
+}
+val tweets = TableQuery[Tweets]
 
-  // These are both necessary for auto increment to work with psql
-  def autoInc = twitterId ~ screenName ~ content ~ fetchedAt returning id
-
+/*
+object Tweets{
 
   def addToTable(tweet: Tweet): Tweet = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
+    getDatabase().withSession { implicit session: Session =>
       val id = Tweets.autoInc.insert(tweet.twitterId, tweet.screenName, tweet.content, tweet.fetchedAt)
       return fetch(id).get
     }
@@ -109,3 +103,4 @@ object Tweets extends Table[Tweet]("tweets") {
   }
 
 }
+*/

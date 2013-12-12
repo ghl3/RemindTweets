@@ -10,11 +10,9 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "org.twitter4j" % "twitter4j-stream" % "3.0.3"
 
-libraryDependencies +=   "postgresql" % "postgresql" % "8.4-702.jdbc4"
+libraryDependencies += "postgresql" % "postgresql" % "8.4-702.jdbc4"
 
-libraryDependencies += "com.typesafe.slick" %% "slick" % "1.0.0"
-
-libraryDependencies += "com.typesafe.play" %% "play-slick" % "0.5.0.8"
+libraryDependencies += "com.typesafe.slick" %% "slick" % "2.0.0-M3"
 
 libraryDependencies += "com.github.tminglei" % "slick-pg_2.10.1" % "0.2.2"
 

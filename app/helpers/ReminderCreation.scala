@@ -6,7 +6,6 @@ import play.Logger
 
 object ReminderCreation {
 
-
   def handleStatus(status: twitter4j.Status): Unit = {
 
     if (Reminder.isReminder(status)) {

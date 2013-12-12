@@ -1,21 +1,22 @@
 package models
 
 import org.joda.time.LocalDateTime
-import app.MyPostgresDriver.simple._
 import scala.slick.lifted._
-import play.api.Play.current
+import helpers.Database.getDatabase
+import app.MyPostgresDriver.simple._
+
 
 // TODO: Add twitterid
 case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
 
   def getReminders: List[Reminder] = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
+    getDatabase().withSession { implicit session =>
       return (for { b <- Reminders if b.userId is this.id} yield b).list
     }
   }
 
   def getScheduledReminders: List[ScheduledReminder] = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
+    getDatabase().withSession { implicit session: Session =>
       return (for { b <- ScheduledReminders if b.userId is this.id} yield b).list
     }
   }
@@ -32,12 +33,11 @@ object User {
    return false
  }
 
-
 }
 
 
 // Definition of the COFFEES table
-object Users extends Table[User]("users") {
+object Users extends TableQuery[User]("users") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
   def screenName = column[String]("screenname", O.NotNull)

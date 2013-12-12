@@ -3,7 +3,9 @@ package models
 import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
 import scala.slick.lifted._
-import play.api.Play.current
+
+// Based on:
+// http://slick.typesafe.com/doc/2.0.0-M3/lifted-embedding.html#inserting
 
 /**
  * A SchuledReminder is an object representing a single reminder
@@ -22,7 +24,7 @@ case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long,
 
 
 // Definition of the COFFEES table
-object ScheduledReminders extends Table[ScheduledReminder]("scheduledreminders") {
+class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "scheduledreminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def reminderId = column[Long]("reminderid", O.NotNull)
@@ -31,8 +33,20 @@ object ScheduledReminders extends Table[ScheduledReminder]("scheduledreminders")
   def executed = column[Boolean]("executed")
   def cancelled = column[Boolean]("cancelled")
 
+  def * = (id.?, reminderId, userId, time, executed, cancelled)  <> (ScheduledReminder.tupled, ScheduledReminder.unapply)
+}
 
-  def * : ColumnBase[ScheduledReminder] = (id.? ~ reminderId ~ userId ~time ~ executed ~ cancelled) <> (ScheduledReminder .apply _, ScheduledReminder.unapply _)
+object ScheduledReminders {
+  val scheduledReminders = TableQuery[ScheduledReminders]
+
+  def usersForInsert = scheduledReminders.map(u => (u.reminderId, u.userId, u.time, u.executed, u.cancelled).shaped <>
+    ({ t => ScheduledReminder(None, t.reminderId, t.userId, t.time, t.executed, t.cancelled)},
+    { (u: ScheduledReminder) => Some((u.reminderId, u.userId, u.time, u.executed, u.cancelled))}))
+
+}
+
+/*
+object ScheduledReminders{
 
   // These are both necessary for auto increment to work with psql
   def autoInc =  reminderId ~ userId ~time ~ executed ~ cancelled returning id
@@ -59,5 +73,5 @@ object ScheduledReminders extends Table[ScheduledReminder]("scheduledreminders")
 
 }
 
-
+*/
 
