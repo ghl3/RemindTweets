@@ -86,6 +86,18 @@ object Tweets {
 
   val tweets = TableQuery[Tweets]
 
+  def findById(id: Long)(implicit s: Session): Option[Tweet] = {
+    tweets.where(_.id === id).firstOption
+  }
+
+  def insert(tweet: Tweet)(implicit s: Session) {
+    tweets.insert(tweet)
+  }
+
+  def update(id: Long, tweet: Tweet)(implicit s: Session) {
+    val computerToUpdate: Tweet = tweet.copy(Some(id))
+    tweets.where(_.id === id).update(computerToUpdate)
+  }
 
 }
 

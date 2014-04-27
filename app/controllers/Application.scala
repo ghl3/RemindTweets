@@ -1,5 +1,6 @@
 package controllers
 
+import app.MyPostgresDriver
 import play.Logger
 import helpers.TwitterApi
 import scala.collection.JavaConverters._
@@ -9,15 +10,42 @@ import helpers.Converters
 
 import play.api._
 import play.api.mvc._
+import models.{Tweet, Tweets}
+import org.joda.time.LocalDateTime
+
+//import play.api.db.DB
+
+import play.api.libs.json.Json
+
+
+//import play.api.db.slick.{DBAction, DB}
+
+import play.api.db.slick._
+
 
 
 
 object Application extends Controller {
 
   def index = Action {
-
       Ok(views.html.index("Your new application is ready."))
   }
+
+
+  /*
+  def delete(id: Long) = DBAction { implicit rs =>
+    Tweets.delete(id)
+    Ok(views.html.index("Your new application is ready."))
+  }
+  */
+
+
+  def addTweet = DBAction { implicit rs =>
+    val myTweet = Tweet(Option.empty, 12345L, "FOO", Json.parse("{}"), new LocalDateTime())
+    Tweets.insert(myTweet)
+    Ok(views.html.index("Your new application is ready."))
+  }
+
 
 
   def mentions = Action {
