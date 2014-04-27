@@ -2,18 +2,21 @@ package models
 
 import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
+//import play.api.db.slick.Config.driver.simple._
 import play.api.Play.current
 import play.Logger
 import scala.util.matching.Regex
 
 import play.api.Play.current
 import play.api.db.slick;
-import scala.slick.lifted.Tag
+//import scala.slick.lifted.Tag
+
+
+import app.MyPostgresDriver.simple.Tag
 
 import helpers.Database.getDatabase
 
-import scala.slick.lifted._
-
+import scala.slick.lifted.ColumnBase
 
 /**
  * A user-created request to be reminded
@@ -138,9 +141,6 @@ object Reminder {
 }
 */
 
-private[models] trait DAO {
-  val Reminders = TableQuery[Reminders]
-}
 
 // Definition of the COFFEES table
 class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
@@ -153,18 +153,26 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
   def request = column[String]("request")
   def content = column[String]("content")
 
-  def * : ColumnBase[Reminder] = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply _)
+  def * = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply _)
 
 }
 
 object Reminders {
 
+  val reminders = TableQuery[Reminders]
+
+  def insert(reminder: Reminder)(implicit s: Session) {
+    reminders.insert(reminder)
+  }
+
   // These are both necessary for auto increment to work with psql
   //def autoInc =  userId ~ createdAt ~ repeat ~ firstTime ~ request ~ content returning id
 
+  /*
   def addToTable(reminder: Reminder): Long = {
     play.api.db.slick.DB.withSession{implicit session: Session =>
       Logger.info("Adding reminder to table: {}", reminder)
+      val id = Reminders.i
       val id = Reminders.autoInc.insert(reminder.userId, reminder.createdAt, reminder.repeat, reminder.firstTime, reminder.request, reminder.content)
       return id
       //return fetch(id).get
@@ -184,7 +192,7 @@ object Reminders {
       (for { b <- Reminders if b.id is id} yield b).firstOption
     }
   }
-
+*/
 
 }
 

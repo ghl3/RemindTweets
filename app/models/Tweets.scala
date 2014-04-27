@@ -3,22 +3,35 @@ package models
 import org.joda.time.LocalDateTime
 
 import app.MyPostgresDriver.simple._
-import org.json4s.native.Serialization.write
-import org.json4s.native.JsonMethods
+//import org.json4s.native.Serialization.write
+//import org.json4s.native.JsonMethods
 
-import org.json4s._
-import scala.slick.lifted._
+//import org.json4s._
+//import scala.slick.lifted._
 
-import play.Logger
+//import play.Logger
 import helpers.Converters
-import helpers.Database.getDatabase
+//import org.json4s.JValue
+
+import play.api.libs.json.JsValue
+//import play.api.libs.json.Json
+
+
+//import app.MyPostgresDriver.simple.Tag
+
+
+//import app.WithMyDriver
+
+//import play.api.libs.json.JsValue
+
+//import helpers.Database.getDatabase
 
 // SEE: https://github.com/ThomasAlexandre/slickcrudsample/
 // http://java.dzone.com/articles/getting-started-play-21-scala
 
 // TODO: Convert to DateTime
 // TODO: Remove the JValue as a member.  Should only take a Status, store that, and convet it to JValue for database persistence
-case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content: JValue, fetchedAt: LocalDateTime) {
+case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content: JsValue, fetchedAt: LocalDateTime) {
 
   // We internally store a twitter4j object
   // for convenience
@@ -26,8 +39,9 @@ case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content:
 
   // Convert the internal json4s object to a string
   def jsonString(): String = {
-    implicit val formats = org.json4s.DefaultFormats
-    return  write(content) //content.extract[String]
+    content.toString();
+    //implicit val formats = org.json4s.DefaultFormats
+    //return write(content) //content.extract[String]
   }
 
   // Convert the internal json4s object to a
@@ -35,22 +49,10 @@ case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content:
   def getStatus: twitter4j.Status = {
     return obj
   }
-  /*
-    try {
-      return twitter4j.json.DataObjectFactory.createStatus(TwitterApi.dummyJsonB)
-    }
-    catch {
-      case e: Exception =>
-        Logger.error("Failed to create twitter status", e)
-        return null
-    }
-    return null
-  }
-  */
 
 }
 
-
+/*
 object Tweet {
 
   def fromStatus(status: twitter4j.Status): Tweet = {
@@ -58,13 +60,14 @@ object Tweet {
     val statusJson: String = Converters.getJsonStringFromStatus(status)
 
     Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
-    val json: org.json4s.JValue = JsonMethods.parse(statusJson)
+    val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
 
     return Tweet(None, status.getId, status.getUser.getScreenName, json, now)
   }
 
-}
 
+}
+*/
 
 // Definition of the COFFEES table
 class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
@@ -72,12 +75,20 @@ class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
   def twitterId = column[Long]("twitterid", O.NotNull)
   def screenName = column[String]("screenName", O.NotNull)
-  def content = column[JValue]("content")
+  def content = column[JsValue]("content")
   def fetchedAt = column[LocalDateTime]("fetchedat")
 
-  def * = (id.?, twitterId, screenName, content, fetchedAt)
+  def * = (id.?, twitterId, screenName, content, fetchedAt) <> (Tweet.tupled, Tweet.unapply _)
 }
-val tweets = TableQuery[Tweets]
+
+
+object Tweets {
+
+  val tweets = TableQuery[Tweets]
+
+
+}
+
 
 /*
 object Tweets{

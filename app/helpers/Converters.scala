@@ -2,6 +2,9 @@ package helpers
 
 import play.Logger
 import org.json4s.JValue
+import play.api.libs.json.JsValue
+
+//import play.api.libs.json.JsValue
 
 
 object Converters {
@@ -11,10 +14,10 @@ object Converters {
     return twitter4j.json.DataObjectFactory.createStatus(jsonString)
   }
 
-  def createStatusFromJson(json: JValue): twitter4j.Status = {
+  def createStatusFromJson(json: JsValue): twitter4j.Status = {
     try {
       //implicit val formats =org.json4s.DefaultFormats
-      val jsonString: String = getJsonStringFromJson(json) //json.extract[String]
+      val jsonString: String = json.toString() // extract[String] //getJsonStringFromJson(json) //json.extract[String]
       return createStatusFromJsonString(jsonString)
     }
     catch {

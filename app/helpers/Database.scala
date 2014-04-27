@@ -1,7 +1,7 @@
 package helpers
 
 import app.MyPostgresDriver.simple._
-import scala.slick.lifted._
+//import scala.slick.lifted._
 
 
 object Database {

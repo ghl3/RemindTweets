@@ -1,14 +1,18 @@
 package models
 
 import org.joda.time.LocalDateTime
-import scala.slick.lifted._
-import helpers.Database.getDatabase
+//import scala.slick.lifted._
+//import helpers.Database.getDatabase
 import app.MyPostgresDriver.simple._
+//import scala.slick.lifted.Tag
+
+//import app.MyPostgresDriver.simple.Tag
 
 
 // TODO: Add twitterid
-case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
+case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime)
 
+  /*
   def getReminders: List[Reminder] = {
     getDatabase().withSession { implicit session =>
       return (for { b <- Reminders if b.userId is this.id} yield b).list
@@ -20,9 +24,10 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
       return (for { b <- ScheduledReminders if b.userId is this.id} yield b).list
     }
   }
+*/
 
-}
 
+/*
 object User {
 
   def createUser(user: twitter4j.User): User = {
@@ -34,18 +39,19 @@ object User {
  }
 
 }
+*/
 
 
 // Definition of the COFFEES table
-object Users extends TableQuery[User]("users") {
+class Users(tag: Tag) extends Table[User](tag, "users") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
   def screenName = column[String]("screenname", O.NotNull)
   def createdAt = column[LocalDateTime]("createdat")
 
+  def * = (id.?, screenName, createdAt) <> (User.tupled, User.unapply _)
 
-  def * : ColumnBase[User] = (id.? ~ screenName ~ createdAt) <> (User .apply _, User.unapply _)
-
+/*
   // These are both necessary for auto increment to work with psql
   def autoInc = screenName ~ createdAt returning id
 
@@ -68,6 +74,6 @@ object Users extends TableQuery[User]("users") {
       (for { b <- Users if b.id is id} yield b).firstOption
     }
   }
-
+*/
 }
 

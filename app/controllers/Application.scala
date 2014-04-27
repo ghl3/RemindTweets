@@ -1,24 +1,22 @@
 package controllers
 
 import play.Logger
-import play.api.mvc.{Controller, Action}
 import helpers.TwitterApi
 import scala.collection.JavaConverters._
 
-import models.{Tweet, Tweets}
-import org.json4s._
-import org.json4s.native.JsonMethods
-
-import org.joda.time.LocalDateTime
-
 import helpers.ReminderCreation.handleStatus
 import helpers.Converters
+
+import play.api._
+import play.api.mvc._
+
 
 
 object Application extends Controller {
 
   def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+
+      Ok(views.html.index("Your new application is ready."))
   }
 
 
@@ -51,7 +49,7 @@ object Application extends Controller {
     Ok(views.html.index("Fish"))
   }
 
-
+/*
   def addTweet = Action {
     val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
     val tweet: Tweet = Tweet(None, 999L, "MrDood", myVal, LocalDateTime.now())
@@ -63,6 +61,6 @@ object Application extends Controller {
     val tweet = Tweets.fetch(id).get.getStatus
     Ok(views.html.index("Created Tweet: %s".format(tweet.toString)))
   }
-
+*/
 
 }

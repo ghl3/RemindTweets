@@ -8,6 +8,7 @@ object ReminderCreation {
 
   def handleStatus(status: twitter4j.Status): Unit = {
 
+    /*
     if (Reminder.isReminder(status)) {
       if (User.isNewUser(status.getUser)) {
         var user = User.createUser(status.getUser)
@@ -28,6 +29,7 @@ object ReminderCreation {
     tweet = Tweets.addToTable(tweet)
     Logger.info("Tweet: {} {}", tweet.id, tweet.jsonString)
   }
-
+*/
+  }
 
 }
