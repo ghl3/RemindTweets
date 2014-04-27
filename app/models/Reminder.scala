@@ -32,14 +32,12 @@ case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
                     repeat: String, firstTime: LocalDateTime,
                     request: String, content: String) {
 
-/*
+
   def getScheduledReminders: List[ScheduledReminder] = {
     getDatabase().withSession{implicit session: Session =>
-      return (for { b <- ScheduledReminders if b.reminderId is this.id} yield b).list
+      return (for { b <- ScheduledReminders.scheduledReminders if b.reminderId is this.id} yield b).list
     }
   }
-*/
-
 }
 
 

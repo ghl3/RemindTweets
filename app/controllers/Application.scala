@@ -42,8 +42,8 @@ object Application extends Controller {
 
   def addTweet = DBAction { implicit rs =>
     val myTweet = Tweet(Option.empty, 12345L, "FOO", Json.parse("{}"), new LocalDateTime())
-    Tweets.insert(myTweet)
-    Ok(views.html.index("Your new application is ready."))
+    val updatedTweet = Tweets.insertAndGet(myTweet)
+    Ok(views.html.index("Your new application is ready: " + updatedTweet))
   }
 
 

@@ -9,12 +9,12 @@ import app.MyPostgresDriver.simple._
 //import org.json4s._
 //import scala.slick.lifted._
 
-//import play.Logger
+import play.Logger
 import helpers.Converters
 //import org.json4s.JValue
 
 import play.api.libs.json.JsValue
-//import play.api.libs.json.Json
+import play.api.libs.json.Json
 
 
 //import app.MyPostgresDriver.simple.Tag
@@ -39,21 +39,19 @@ case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content:
 
   // Convert the internal json4s object to a string
   def jsonString(): String = {
-    content.toString();
-    //implicit val formats = org.json4s.DefaultFormats
-    //return write(content) //content.extract[String]
+    content.toString()
   }
 
   // Convert the internal json4s object to a
   // twitter4j Status object
   def getStatus: twitter4j.Status = {
-    return obj
+    obj
   }
 
 }
 
-/*
-object Tweet {
+
+object TweetHelpers {
 
   def fromStatus(status: twitter4j.Status): Tweet = {
     val now = LocalDateTime.now()
@@ -67,7 +65,7 @@ object Tweet {
 
 
 }
-*/
+
 
 // Definition of the COFFEES table
 class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
@@ -92,6 +90,11 @@ object Tweets {
 
   def insert(tweet: Tweet)(implicit s: Session) {
     tweets.insert(tweet)
+  }
+
+  def insertAndGet(tweet: Tweet)(implicit s: Session): Tweet = {
+    val userId = (tweets returning tweets.map(_.id)) += tweet
+    return tweet.copy(id = Some(userId))
   }
 
   def update(id: Long, tweet: Tweet)(implicit s: Session) {
