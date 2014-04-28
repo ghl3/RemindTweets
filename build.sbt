@@ -26,4 +26,8 @@ libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.5"
 
 libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.5"
 
+libraryDependencies += "jp.t2v" %% "play2-auth"      % "0.11.0"
+
+libraryDependencies += "jp.t2v" %% "play2-auth-test" % "0.11.0" % "test"
+
 play.Project.playScalaSettings

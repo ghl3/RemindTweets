@@ -2,7 +2,7 @@ package models
 
 import play.Logger
 
-import org.joda.time.LocalDateTime
+import org.joda.time.{Interval, DateTime, LocalDateTime}
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -17,12 +17,12 @@ import scala.util.matching.Regex
  * @param createdAt When the reminder was created
  * @param repeat The repeat strategy of the reminder
  * @param firstTime When the first reminder should be tweeted
- * @param request The text to be sent to the user at the remind time
- * @param content The content of the user's request
+ * @param what The text to be sent to the user at the remind time
+ * @param request The content of the user's request
  */
 case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
                     repeat: String, firstTime: LocalDateTime,
-                    request: String, content: String) {
+                    what: String, request: String) {
 
 
   def getScheduledReminders: List[ScheduledReminder] = {
@@ -61,7 +61,7 @@ object Reminders {
 
   def insertAndGet(reminder: Reminder)(implicit s: Session): Reminder = {
     val userId = (reminders returning reminders.map(_.id)) += reminder
-    return reminder.copy(id = Some(userId))
+    reminder.copy(id = Some(userId))
   }
 
   def update(id: Long, reminder: Reminder)(implicit s: Session) {
@@ -74,38 +74,60 @@ object Reminders {
   }
 
 
-
   /**
    * Is the supplied twitter status a request for a reminder
    * @param status
    * @return
    */
   def isReminder(status: twitter4j.Status): Boolean = {
-    val parsed = ReminderHelper.parseStatusText(status.getText)
-    return parsed != None
+    ReminderHelper.parseStatusText(status.getText) match {
+      case ReminderParsing.Success(_,_,_) => true
+      case _ => false
+    }
   }
 
+
+  /**
+   * Attempt to create a reminder from a twitter status
+   * @param status
+   * @return
+   */
   def createReminder(status: twitter4j.Status): Option[Reminder] = {
 
-    val successfulParse = ReminderHelper.parseStatusText(status.getText)
-    if (successfulParse.isEmpty) {
-      return None
+    val parsed = ReminderHelper.parseStatusText(status.getText)
+
+    parsed match {
+      case ReminderParsing.Success(repeat, firstTime, what) =>
+         Some(Reminder(None, status.getUser.getId, LocalDateTime.now(), repeat, firstTime, what, status.getText))
+      case _ => None
     }
-
-    val parsed = successfulParse.get
-
-    return Option(Reminder(None, status.getUser.getId, LocalDateTime.now(),
-      parsed.repeat, parsed.firstTime, parsed.request, status.getText))
   }
+}
+
+
+object ReminderParsing {
+
+  sealed abstract class Parsed
+  case class Success(repeat: String, firstTime: LocalDateTime, what: String) extends Parsed
+  case object Failure extends Parsed
+  case object DateTooEarly extends Parsed
+  case object InvalidDate extends Parsed
+
+  // TODO: Replace the repeat value with this
+  sealed abstract class Repeat
+  case object Never extends Repeat
+  case class Every(interval: Interval) extends Repeat
 
 }
 
 
 object ReminderHelper {
 
-  case class Parsed(repeat: String, firstTime: LocalDateTime, request: String)
+//  case class Parsed(repeat: String, firstTime: LocalDateTime, request: String)
+
 
   /**
+   *
    * The main method that converts a tweet into the
    * logical contents of a reminder
    * Return None if the parsing fails or if the tweet
@@ -113,31 +135,31 @@ object ReminderHelper {
    * @param text
    * @return
    */
-  def parseStatusText(text: String): Option[Parsed] = {
+  def parseStatusText(text: String): ReminderParsing.Parsed = {
 
     try {
 
       // TODO: Fuck this shit!
       //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+) (every (.+))?", "to", "action", "time", "every", "repeat")
       //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) on (.+) (every (.+))?")
-      val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+)", "to", "request", "time")
+     // val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+)?? (every .+)?", "to", "what", "when", "every")
+
+      val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+?) (every\\w?)?(.+)?",
+        "to", "what", "when", "every", "repeat")
 
       Logger.info("Checking text: {}", text)
 
       val result = pattern.findFirstMatchIn(text)
       if(result==None) {
         Logger.info("Didn't match pattern: {}", text)
-        return None
+        return ReminderParsing.Failure
       } else {
         Logger.info("Found match pattern: {}", text)
       }
 
       val groups = result.get
-
-      val action = groups.group("request")
-      val time = LocalDateTime.parse(groups.group("time"))
-
-      return Option(Parsed("NEVER", time, action))
+      val what = groups.group("what")
+      val repeat = groups.group("repeat").replace(" ", "")
 
       /*
       //val matches: List[String] = pattern.findAllIn(text).map((item) => item.toString).toList
@@ -160,15 +182,45 @@ object ReminderHelper {
         return None
       }
       */
-    }
-    catch {
-      case e: Exception => {
-        Logger.error("Failed to parse Text: {}", text, e)
-        return None
+
+      val parsedTime = parseReminderTime(groups.group("when"))
+
+      parsedTime match {
+        case None => {
+          Logger.error("Failed to parse time {}", parsedTime)
+          ReminderParsing.Failure
+        }
+        case Some(time) =>
+          if (time.isAfter(LocalDateTime.now())) {
+            ReminderParsing.Success(repeat, time, what)
+          } else {
+            ReminderParsing.DateTooEarly
+          }
       }
     }
-    return None
+    catch {
+      case e: Exception =>
+        Logger.error("Failed to parse Text: {}", text, e)
+        return ReminderParsing.Failure
+    }
   }
+
+
+  /**
+   * Takes a string and returns the
+   * @param timeString
+   * @return
+   */
+  def parseReminderTime(timeString: String) : Option[LocalDateTime] = {
+    try {
+      Some(LocalDateTime.parse(timeString))
+    } catch {
+      case e: Exception =>
+        Logger.error("Failed to parse time {}", timeString, e)
+        None
+    }
+  }
+
 
 }
 
