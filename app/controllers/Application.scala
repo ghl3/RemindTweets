@@ -17,20 +17,15 @@ import play.api.db.slick._
 
 
 
-
 object Application extends Controller {
 
   def index = Action {
       Ok(views.html.index("Your new application is ready."))
   }
 
-
-  /*
-  def delete(id: Long) = DBAction { implicit rs =>
-    Tweets.delete(id)
-    Ok(views.html.index("Your new application is ready."))
+  def tweet(id: Long) = DBAction { implicit rs =>
+    Ok(Tweets.findById(id).get.content)
   }
-  */
 
 
   def addTweet = DBAction { implicit rs =>
@@ -39,6 +34,9 @@ object Application extends Controller {
     Ok(views.html.index("Your new application is ready: " + updatedTweet))
   }
 
+
+//  def getTwitterUserTimeline = DBAction { implicit rs =>
+//  }
 
 
   def mentions = Action {

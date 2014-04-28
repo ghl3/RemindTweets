@@ -5,6 +5,9 @@
 # Home page
 GET     /                           controllers.Application.index
 
+
+GET   /tweets/:id                   controllers.Application.tweet(id: Long)
+
 # Mentions
 GET     /mentions                   controllers.Application.mentions
 

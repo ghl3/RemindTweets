@@ -1,5 +1,7 @@
 package helpers
 
+
+import play.Logger
 import twitter4j._
 
 import twitter4j.conf.Configuration
@@ -16,16 +18,18 @@ object TwitterApi {
   }
 
   def getConfig: Configuration = {
+
     val vars = getConfigVariableFromEnv
+
     new twitter4j.conf.ConfigurationBuilder()
       .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
       .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
       .setOAuthAccessToken(vars.getOrElse("accessToken", null))
       .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
       .setJSONStoreEnabled(true)
+      .setUseSSL(true)
       .build()
   }
-
 
 
   def getTwitter: Twitter = {
