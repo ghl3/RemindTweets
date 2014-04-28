@@ -1,6 +1,5 @@
 package controllers
 
-import app.MyPostgresDriver
 import play.Logger
 import helpers.TwitterApi
 import scala.collection.JavaConverters._
@@ -8,17 +7,11 @@ import scala.collection.JavaConverters._
 import helpers.ReminderCreation.handleStatus
 import helpers.Converters
 
-import play.api._
 import play.api.mvc._
 import models.{Tweet, Tweets}
 import org.joda.time.LocalDateTime
 
-//import play.api.db.DB
-
 import play.api.libs.json.Json
-
-
-//import play.api.db.slick.{DBAction, DB}
 
 import play.api.db.slick._
 

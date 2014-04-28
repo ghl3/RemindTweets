@@ -2,7 +2,6 @@ package models
 
 import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
-//import scala.slick.lifted._
 
 import app.MyPostgresDriver.simple.Tag
 
@@ -42,40 +41,27 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
 object ScheduledReminders {
   val scheduledReminders = TableQuery[ScheduledReminders]
 
-  /*
-  def usersForInsert = scheduledReminders.map(u => (u.reminderId, u.userId, u.time, u.executed, u.cancelled).shaped <>
-    ({ t => ScheduledReminder(None, t.reminderId, t.userId, t.time, t.executed, t.cancelled)},
-    { (u: ScheduledReminder) => Some((u.reminderId, u.userId, u.time, u.executed, u.cancelled))}))
-*/
-}
 
-/*
-object ScheduledReminders{
-
-  // These are both necessary for auto increment to work with psql
-  def autoInc =  reminderId ~ userId ~time ~ executed ~ cancelled returning id
-
-  def addToTable(reminder: ScheduledReminder): ScheduledReminder = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = ScheduledReminders.autoInc.insert(reminder.reminderId, reminder.userId, reminder.time, reminder.executed, reminder.cancelled)
-      return fetch(id).get
-    }
+  def findById(id: Long)(implicit s: Session): Option[ScheduledReminder] = {
+    scheduledReminders.where(_.id === id).firstOption
   }
 
-  def update(reminder: ScheduledReminder): ScheduledReminder = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = ScheduledReminders.insert(reminder)
-      return fetch(id).get
-    }
+  def insert(scheduledReminder: ScheduledReminder)(implicit s: Session) {
+    scheduledReminders.insert(scheduledReminder)
   }
 
-  def fetch(id: Long): Option[ScheduledReminder] = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      (for { b <- ScheduledReminders if b.id is id} yield b).firstOption
-    }
+  def insertAndGet(scheduledReminder: ScheduledReminder)(implicit s: Session): ScheduledReminder = {
+    val userId = (scheduledReminders returning scheduledReminders.map(_.id)) += scheduledReminder
+    return scheduledReminder.copy(id = Some(userId))
+  }
+
+  def update(id: Long, scheduledReminder: ScheduledReminder)(implicit s: Session) {
+    val reminderToUpdate: ScheduledReminder = scheduledReminder.copy(Some(id))
+    scheduledReminders.where(_.id === id).update(reminderToUpdate)
+  }
+
+  def delete(id: Long)(implicit s: Session) {
+    scheduledReminders.where(_.id === id).delete
   }
 
 }
-
-*/
-

@@ -3,28 +3,12 @@ package models
 import org.joda.time.LocalDateTime
 
 import app.MyPostgresDriver.simple._
-//import org.json4s.native.Serialization.write
-//import org.json4s.native.JsonMethods
-
-//import org.json4s._
-//import scala.slick.lifted._
-
 import play.Logger
 import helpers.Converters
-//import org.json4s.JValue
 
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 
-
-//import app.MyPostgresDriver.simple.Tag
-
-
-//import app.WithMyDriver
-
-//import play.api.libs.json.JsValue
-
-//import helpers.Database.getDatabase
 
 // SEE: https://github.com/ThomasAlexandre/slickcrudsample/
 // http://java.dzone.com/articles/getting-started-play-21-scala
@@ -63,11 +47,9 @@ object TweetHelpers {
     return Tweet(None, status.getId, status.getUser.getScreenName, json, now)
   }
 
-
 }
 
 
-// Definition of the COFFEES table
 class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
@@ -98,35 +80,12 @@ object Tweets {
   }
 
   def update(id: Long, tweet: Tweet)(implicit s: Session) {
-    val computerToUpdate: Tweet = tweet.copy(Some(id))
-    tweets.where(_.id === id).update(computerToUpdate)
+    val tweetToUpdate: Tweet = tweet.copy(Some(id))
+    tweets.where(_.id === id).update(tweetToUpdate)
+  }
+
+  def delete(id: Long)(implicit s: Session) {
+    tweets.where(_.id === id).delete
   }
 
 }
-
-
-/*
-object Tweets{
-
-  def addToTable(tweet: Tweet): Tweet = {
-    getDatabase().withSession { implicit session: Session =>
-      val id = Tweets.autoInc.insert(tweet.twitterId, tweet.screenName, tweet.content, tweet.fetchedAt)
-      return fetch(id).get
-    }
-  }
-
-  def update(tweet: Tweet): Tweet = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = Tweets.insert(tweet)
-      return fetch(id).get
-    }
-  }
-
-  def fetch(id: Long): Option[Tweet] = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      (for { b <- Tweets if b.id is id} yield b).firstOption
-    }
-  }
-
-}
-*/

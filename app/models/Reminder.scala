@@ -1,22 +1,14 @@
 package models
 
+import play.Logger
+
 import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
-//import play.api.db.slick.Config.driver.simple._
-import play.api.Play.current
-import play.Logger
-import scala.util.matching.Regex
-
-import play.api.Play.current
-import play.api.db.slick;
-//import scala.slick.lifted.Tag
-
 
 import app.MyPostgresDriver.simple.Tag
-
 import helpers.Database.getDatabase
+import scala.util.matching.Regex
 
-import scala.slick.lifted.ColumnBase
 
 /**
  * A user-created request to be reminded
@@ -41,8 +33,75 @@ case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
 }
 
 
-/*
-object Reminder {
+class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
+
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def userId = column[Long]("userid", O.NotNull)
+  def createdAt = column[LocalDateTime]("createdat")
+  def repeat = column[String]("repeat")
+  def firstTime = column[LocalDateTime]("firsttime")
+  def request = column[String]("request")
+  def content = column[String]("content")
+
+  def * = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply _)
+
+}
+
+object Reminders {
+
+  val reminders = TableQuery[Reminders]
+
+  def findById(id: Long)(implicit s: Session): Option[Reminder] = {
+    reminders.where(_.id === id).firstOption
+  }
+
+  def insert(reminder: Reminder)(implicit s: Session) {
+    reminders.insert(reminder)
+  }
+
+  def insertAndGet(reminder: Reminder)(implicit s: Session): Reminder = {
+    val userId = (reminders returning reminders.map(_.id)) += reminder
+    return reminder.copy(id = Some(userId))
+  }
+
+  def update(id: Long, reminder: Reminder)(implicit s: Session) {
+    val reminderToUpdate: Reminder = reminder.copy(Some(id))
+    reminders.where(_.id === id).update(reminderToUpdate)
+  }
+
+  def delete(id: Long)(implicit s: Session) {
+    reminders.where(_.id === id).delete
+  }
+
+
+
+  /**
+   * Is the supplied twitter status a request for a reminder
+   * @param status
+   * @return
+   */
+  def isReminder(status: twitter4j.Status): Boolean = {
+    val parsed = ReminderHelper.parseStatusText(status.getText)
+    return parsed != None
+  }
+
+  def createReminder(status: twitter4j.Status): Option[Reminder] = {
+
+    val successfulParse = ReminderHelper.parseStatusText(status.getText)
+    if (successfulParse.isEmpty) {
+      return None
+    }
+
+    val parsed = successfulParse.get
+
+    return Option(Reminder(None, status.getUser.getId, LocalDateTime.now(),
+      parsed.repeat, parsed.firstTime, parsed.request, status.getText))
+  }
+
+}
+
+
+object ReminderHelper {
 
   case class Parsed(repeat: String, firstTime: LocalDateTime, request: String)
 
@@ -111,87 +170,5 @@ object Reminder {
     return None
   }
 
-  /**
-   * Is the supplied twitter status a request for a reminder
-   * @param statusText
-   * @return
-   */
-  def isReminder(status: twitter4j.Status): Boolean = {
-    val parsed = parseStatusText(status.getText)
-    return parsed != None
-  }
-
-  def createReminder(status: twitter4j.Status): Option[Reminder] = {
-
-    val successfulParse = parseStatusText(status.getText)
-    if (successfulParse.isEmpty) {
-      return None
-    }
-
-    val parsed = successfulParse.get
-
-    return Option(Reminder(None, status.getUser.getId, LocalDateTime.now(),
-    parsed.repeat, parsed.firstTime, parsed.request, status.getText))
-
-  }
-
-
 }
-*/
-
-
-// Definition of the COFFEES table
-class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
-
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def userId = column[Long]("userid", O.NotNull)
-  def createdAt = column[LocalDateTime]("createdat")
-  def repeat = column[String]("repeat")
-  def firstTime = column[LocalDateTime]("firsttime")
-  def request = column[String]("request")
-  def content = column[String]("content")
-
-  def * = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply _)
-
-}
-
-object Reminders {
-
-  val reminders = TableQuery[Reminders]
-
-  def insert(reminder: Reminder)(implicit s: Session) {
-    reminders.insert(reminder)
-  }
-
-  // These are both necessary for auto increment to work with psql
-  //def autoInc =  userId ~ createdAt ~ repeat ~ firstTime ~ request ~ content returning id
-
-  /*
-  def addToTable(reminder: Reminder): Long = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      Logger.info("Adding reminder to table: {}", reminder)
-      val id = Reminders.i
-      val id = Reminders.autoInc.insert(reminder.userId, reminder.createdAt, reminder.repeat, reminder.firstTime, reminder.request, reminder.content)
-      return id
-      //return fetch(id).get
-    }
-  }
-
-  def update(reminder: Reminder): Reminder = {
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      val id = Reminders.insert(reminder)
-      return fetch(id).get
-    }
-  }
-
-  def fetch(id: Long): Option[Reminder] = {
-    Logger.info("Looking for reminder with id: {}", id.toString)
-    play.api.db.slick.DB.withSession{implicit session: Session =>
-      (for { b <- Reminders if b.id is id} yield b).firstOption
-    }
-  }
-*/
-
-}
-
 
