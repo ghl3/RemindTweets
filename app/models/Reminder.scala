@@ -126,6 +126,17 @@ object ReminderHelper {
 //  case class Parsed(repeat: String, firstTime: LocalDateTime, request: String)
 
 
+
+  def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
+
+    tweets.map(tweet => parseStatusText(tweet.getStatus.getText)).filter {
+      case ReminderParsing.Success(_,_,_) => true
+      case _ => false
+    }
+
+  }
+
+
   /**
    *
    * The main method that converts a tweet into the
