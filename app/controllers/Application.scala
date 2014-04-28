@@ -8,12 +8,12 @@ import helpers.ReminderCreation.handleStatus
 import helpers.Converters
 
 import play.api.mvc._
-import models.{Tweet, Tweets}
+import models.{Users, Tweet, Tweets}
 import org.joda.time.LocalDateTime
 
-import play.api.libs.json.Json
-
 import play.api.db.slick._
+
+import play.api.libs.json.{JsObject, Json}
 
 
 object Application extends Controller {
@@ -28,10 +28,15 @@ object Application extends Controller {
   }
 
 
-  def addTweet = DBAction { implicit rs =>
-    val myTweet = Tweet(Option.empty, 12345L, "FOO", Json.parse("{}"), new LocalDateTime())
-    val updatedTweet = Tweets.insertAndGet(myTweet)
-    Ok(views.html.index("Your new application is ready: " + updatedTweet))
+  def addTweet(userId: Long) = DBAction(parse.json) { implicit rs =>
+    Users.findById(userId) match {
+      case Some(user) =>
+        val myTweet = Tweet(Option.empty, userId, 12345L, "FOO", Json.parse("{}"), new LocalDateTime())
+        val updatedTweet = Tweets.insertAndGet(myTweet)
+        Ok(views.html.index("Your new application is ready: " + updatedTweet))
+      case None =>
+        NotFound("User with id %s was not found" format userId)
+    }
   }
 
 

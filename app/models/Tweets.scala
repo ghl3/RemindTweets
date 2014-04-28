@@ -15,7 +15,7 @@ import play.api.libs.json.Json
 
 // TODO: Convert to DateTime
 // TODO: Remove the JValue as a member.  Should only take a Status, store that, and convet it to JValue for database persistence
-case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content: JsValue, fetchedAt: LocalDateTime) {
+case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: String, content: JsValue, fetchedAt: LocalDateTime) {
 
   // We internally store a twitter4j object
   // for convenience
@@ -35,30 +35,16 @@ case class Tweet(id: Option[Long], twitterId: Long, screenName: String, content:
 }
 
 
-object TweetHelpers {
-
-  def fromStatus(status: twitter4j.Status): Tweet = {
-    val now = LocalDateTime.now()
-    val statusJson: String = Converters.getJsonStringFromStatus(status)
-
-    Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
-    val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
-
-    return Tweet(None, status.getId, status.getUser.getScreenName, json, now)
-  }
-
-}
-
-
 class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
+  def userId = column[Long]("userId")
   def twitterId = column[Long]("twitterid", O.NotNull)
   def screenName = column[String]("screenName", O.NotNull)
   def content = column[JsValue]("content")
   def fetchedAt = column[LocalDateTime]("fetchedat")
 
-  def * = (id.?, twitterId, screenName, content, fetchedAt) <> (Tweet.tupled, Tweet.unapply _)
+  def * = (id.?, userId, twitterId, screenName, content, fetchedAt) <> (Tweet.tupled, Tweet.unapply _)
 }
 
 
@@ -86,6 +72,20 @@ object Tweets {
 
   def delete(id: Long)(implicit s: Session) {
     tweets.where(_.id === id).delete
+  }
+
+
+  object TweetHelpers {
+
+    def fromStatus(user: User, status: twitter4j.Status): Tweet = {
+      val now = LocalDateTime.now()
+      val statusJson: String = Converters.getJsonStringFromStatus(status)
+
+      Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
+      val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
+
+      return Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, now)
+    }
   }
 
 }

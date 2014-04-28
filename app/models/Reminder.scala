@@ -2,7 +2,7 @@ package models
 
 import play.Logger
 
-import org.joda.time.{Interval, DateTime, LocalDateTime}
+import org.joda.time.{Interval, LocalDateTime}
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -18,11 +18,11 @@ import scala.util.matching.Regex
  * @param repeat The repeat strategy of the reminder
  * @param firstTime When the first reminder should be tweeted
  * @param what The text to be sent to the user at the remind time
- * @param request The content of the user's request
+ * @param tweetId The id of the tweet that initiated the reminder
  */
 case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
                     repeat: String, firstTime: LocalDateTime,
-                    what: String, request: String) {
+                    what: String, tweetId: Long) {
 
 
   def getScheduledReminders: List[ScheduledReminder] = {
@@ -40,10 +40,10 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
   def createdAt = column[LocalDateTime]("createdat")
   def repeat = column[String]("repeat")
   def firstTime = column[LocalDateTime]("firsttime")
-  def request = column[String]("request")
-  def content = column[String]("content")
+  def what = column[String]("what")
+  def tweetId = column[Long]("tweetId")
 
-  def * = (id.?,  userId, createdAt, repeat, firstTime, request, content) <> (Reminder.tupled, Reminder.unapply _)
+  def * = (id.?,  userId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
 }
 
@@ -89,16 +89,17 @@ object Reminders {
 
   /**
    * Attempt to create a reminder from a twitter status
-   * @param status
+   * @param tweet
    * @return
    */
-  def createReminder(status: twitter4j.Status): Option[Reminder] = {
+  //def createReminder(status: twitter4j.Status): Option[Reminder] = {
+  def createReminder(tweet: models.Tweet): Option[Reminder] = {
 
-    val parsed = ReminderHelper.parseStatusText(status.getText)
+    val parsed = ReminderHelper.parseStatusText(tweet.getStatus.getText)
 
     parsed match {
       case ReminderParsing.Success(repeat, firstTime, what) =>
-         Some(Reminder(None, status.getUser.getId, LocalDateTime.now(), repeat, firstTime, what, status.getText))
+         Some(Reminder(None, tweet.userId, LocalDateTime.now(), repeat, firstTime, what, tweet.id.get))
       case _ => None
     }
   }
