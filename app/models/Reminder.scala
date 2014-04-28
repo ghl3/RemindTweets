@@ -137,13 +137,6 @@ object ReminderHelper {
    */
   def parseStatusText(text: String): ReminderParsing.Parsed = {
 
-    try {
-
-      // TODO: Fuck this shit!
-      //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+) (every (.+))?", "to", "action", "time", "every", "repeat")
-      //val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) on (.+) (every (.+))?")
-     // val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+)?? (every .+)?", "to", "what", "when", "every")
-
       val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+?) (every\\w?)?(.+)?",
         "to", "what", "when", "every", "repeat")
 
@@ -160,36 +153,12 @@ object ReminderHelper {
       val groups = result.get
       val what = groups.group("what")
       val repeat = groups.group("repeat").replace(" ", "")
-
-      /*
-      //val matches: List[String] = pattern.findAllIn(text).map((item) => item.toString).toList
-
-      Logger.info("Text: {} Matches: {}", text, matches)
-
-      if (matches.size==2) {
-        val request = matches(0)
-        val firstTime = LocalDateTime.parse(matches(1))
-        val repeat = "NEVER"
-        return Option(Parsed(repeat, firstTime, request))
-      }
-      else if (matches.size==3) {
-        val request = matches(0)
-        val firstTime = LocalDateTime.parse(matches(1))
-        val repeat = matches(2)
-        return Option(Parsed(repeat, firstTime, request))
-      }
-      else {
-        return None
-      }
-      */
-
       val parsedTime = parseReminderTime(groups.group("when"))
 
       parsedTime match {
-        case None => {
+        case None =>
           Logger.error("Failed to parse time {}", parsedTime)
           ReminderParsing.Failure
-        }
         case Some(time) =>
           if (time.isAfter(LocalDateTime.now())) {
             ReminderParsing.Success(repeat, time, what)
@@ -197,12 +166,6 @@ object ReminderHelper {
             ReminderParsing.DateTooEarly
           }
       }
-    }
-    catch {
-      case e: Exception =>
-        Logger.error("Failed to parse Text: {}", text, e)
-        return ReminderParsing.Failure
-    }
   }
 
 
