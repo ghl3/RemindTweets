@@ -8,6 +8,9 @@ GET     /                           controllers.Application.index
 
 GET   /tweets/:id                   controllers.Application.tweet(id: Long)
 
+
+GET /userTimeline/:screenName       controllers.Application.userTimeline(screenName: String)
+
 # Mentions
 GET     /mentions                   controllers.Application.mentions
 

@@ -70,6 +70,11 @@ object TwitterApi {
   }
 
 
+  def getUserTimeline(screenName: String) = {
+    getTwitter.getUserTimeline(screenName)
+  }
+
+
   class TweetListener(val statusAction: (Status)=>Unit) extends StatusListener {
 
     def onStatus(status: Status) {
