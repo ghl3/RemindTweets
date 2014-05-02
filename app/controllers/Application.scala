@@ -83,8 +83,7 @@ object Application extends Controller {
         Logger.info("Checking tweet: %s".format(tweet))
         ReminderHelper.parseStatusText(tweet.getStatus.getText) match {
           case ReminderParsing.Success(repeat, time, what) =>
-            val reminder = Reminder(None, user.get.id.get, LocalDateTime.now(),
-              repeat, time, what, tweet.id.get)
+            val reminder = Reminders.createFromTweet(user.get, tweet, ReminderParsing.Success(repeat, time, what))
             Tweets.insert(tweet)
             Reminders.insert(reminder)
             Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))

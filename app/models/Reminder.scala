@@ -74,6 +74,10 @@ object Reminders {
   }
 
 
+  def createFromTweet(user: User, tweet: Tweet, parsed: ReminderParsing.Success) =  {
+    Reminder(None, user.id.get, LocalDateTime.now(),parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
+  }
+
   /**
    * Is the supplied twitter status a request for a reminder
    * @param status
