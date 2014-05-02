@@ -8,12 +8,14 @@ import helpers.ReminderCreation.handleStatus
 import helpers.Converters
 
 import play.api.mvc._
-import models.{Users, Tweet, Tweets}
+import models._
 import org.joda.time.LocalDateTime
 
 import play.api.db.slick._
 
 import play.api.libs.json.{JsObject, Json}
+import models.Tweet
+import scala.Some
 
 
 object Application extends Controller {
@@ -50,6 +52,48 @@ object Application extends Controller {
       "createdAt" -> format.format(status.getCreatedAt))
 
     Ok(Json.arr(texts))
+  }
+
+
+  /**
+   * First, we check for an existing user of that name.
+   * If one doesn't exist, we create one.
+   * Next, we get all the tweets for that user.
+   * We then scan through those tweets for any reminders.
+   * If we find any reminders, we save the tweets and
+   * create corresponding reminders.
+   * // TODO: Separate this into to end points for creating the user and adding the reminders
+   * @param screenName
+   * @return
+   */
+  def checkForReminders(screenName: String) = DBAction { implicit rs =>
+
+    val user = Users.getOrCreateUser(screenName)
+
+    if (user.isEmpty) {
+      InternalServerError("Failed to get or create user with screen name %s".format(screenName))
+    }
+    else {
+      // Now that we've got the user, let's get his tweets
+      val timeline: Iterable[twitter4j.Status] = TwitterApi.getUserTimeline(screenName).asScala
+
+      val tweets = Tweets.getUserTweetsFromTimeline(user.get, timeline)
+
+      for (tweet <- tweets) {
+        Logger.info("Checking tweet: %s".format(tweet))
+        ReminderHelper.parseStatusText(tweet.getStatus.getText) match {
+          case ReminderParsing.Success(repeat, time, what) =>
+            val reminder = Reminder(None, user.get.id.get, LocalDateTime.now(),
+              repeat, time, what, tweet.id.get)
+            Tweets.insert(tweet)
+            Reminders.insert(reminder)
+            Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
+          case _ =>
+            Logger.info("Did not find reminder in tweet")
+        }
+      }
+      Ok("SUP")
+    }
   }
 
 

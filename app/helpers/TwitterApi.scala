@@ -1,7 +1,5 @@
 package helpers
 
-
-import play.Logger
 import twitter4j._
 
 import twitter4j.conf.Configuration

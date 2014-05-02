@@ -60,14 +60,37 @@ object Users {
     findById(id).nonEmpty
   }
 
+  def findByScreenName(screenName: String)(implicit s: Session): Option[User] = {
+    users.where(_.screenName === screenName).firstOption
+  }
+
+  def createWithScreenName(screenName: String) (implicit s: Session): Option[User] = {
+    try {
+      val user = User(None, screenName, LocalDateTime.now())
+      Some(insertAndGet(user))
+    } catch {
+      case e: Exception => None
+    }
+  }
+
   /**
    * Create a user from a twitter4j User object
    * @param user
    * @return
    */
   def createUser(user: twitter4j.User)(implicit s: Session): User = {
-    return insertAndGet(new User(None, user.getScreenName, LocalDateTime.now()))
+    insertAndGet(new User(None, user.getScreenName, LocalDateTime.now()))
   }
+
+
+  def getOrCreateUser(screenName: String)(implicit s: Session): Option[User] = {
+    findByScreenName(screenName) match {
+      case Some(user) => Some(user)
+      case None => createWithScreenName(screenName)
+    }
+
+  }
+
 
 
 }

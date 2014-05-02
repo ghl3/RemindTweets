@@ -88,4 +88,8 @@ object Tweets {
     }
   }
 
+  def getUserTweetsFromTimeline(user: User, timeline: Iterable[twitter4j.Status]) : Iterable[Tweet] = {
+    for (status <- timeline) yield TweetHelpers.fromStatus(user, status)
+  }
+
 }
