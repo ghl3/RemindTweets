@@ -159,6 +159,33 @@ object ReminderParsing {
   case class Every(interval: Interval) extends Repeat
 
 
+  val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+?) (on (.+?))? (at (.+?))? (every (.+?))?$",
+    "to", "what", "on", "when", "at", "time", "every", "repeat")
+
+
+  def getResultOfReminderRegex(text: String): Option[Regex.Match] = {
+    pattern.findFirstMatchIn(text)
+  }
+
+  def convertRegexToGroupMap(matched: Regex.Match): Map[String,String] = {
+    (for ((name, group) <- matched.groupNames zip matched.subgroups) yield name -> group).toMap
+  }
+
+  /**
+   * Return a map representing the matched groups of the regex or,
+   * if the input regex doesn't match, return an empty map
+   * @param text
+   * @return
+   */
+  def getStructuredReminderResult(text: String): Map[String,String] = {
+    val result = getResultOfReminderRegex(text)
+    if (result.isDefined) {
+      convertRegexToGroupMap(result.get)
+    } else {
+      Map[String,String]()
+    }
+  }
+
   /**
    *
    * The main method that converts a tweet into the
@@ -170,27 +197,32 @@ object ReminderParsing {
    */
   def parseStatusText(text: String): ReminderParsing.Parsed = {
 
-    val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+?) (every\\w?)?(.+)?",
-      "to", "what", "when", "every", "repeat")
 
     Logger.info("Checking text: {}", text)
 
-    val result = pattern.findFirstMatchIn(text)
-    if(result==None) {
+    val result = getResultOfReminderRegex(text) //pattern.findFirstMatchIn(text)
+    if(result.isEmpty) {
       Logger.info("Didn't match pattern: {}", text)
       return ReminderParsing.Failure
-    } else {
-      Logger.info("Found match pattern: {}", text)
     }
 
-    val groups = result.get
-    val what = groups.group("what")
-    val repeat = groups.group("repeat").replace(" ", "")
-    val parsedTime = parseReminderTime(groups.group("when"))
+    Logger.info("Found match pattern: {}", text)
+
+    val groupMap = convertRegexToGroupMap(result.get)
+
+    //val groups = result.get
+    //val what = groups.group("what")
+    //val repeat = groups.group("repeat").replace(" ", "")
+    //val parsedTime = parseReminderTime(groups.group("when"))
+
+    val what = groupMap("what")
+    val repeat = groupMap("repeat")
+
+    val parsedTime = parseReminderTime(groupMap("time"))
 
     parsedTime match {
       case None =>
-        Logger.error("Failed to parse time {}", parsedTime)
+        Logger.error("Failed to parse time {}", groupMap("time"))
         ReminderParsing.Failure
       case Some(time) =>
         if (time.isAfter(DateTime.now())) {
