@@ -162,7 +162,7 @@ object ReminderParsing {
   case class Every(interval: Interval) extends Repeat
 
 
-  val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+?) (on (.+?))? (at (.+?))? (every (.+?))?$",
+  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
 
@@ -249,7 +249,7 @@ object ReminderParsing {
     val twelveHour = parseTwelveHour(timeString)
 
     if (twelveHour.isDefined) {
-      Some(DateTime.now().withTime(twelveHour.get.getHourOfDay, twelveHour.get.getMinuteOfHour,
+      return Some(DateTime.now().withTime(twelveHour.get.getHourOfDay, twelveHour.get.getMinuteOfHour,
         twelveHour.get.getSecondOfMinute,twelveHour.get.getMillisOfSecond))
     }
 
@@ -258,6 +258,9 @@ object ReminderParsing {
   }
 
   def parseTwelveHour(time: String): Option[LocalTime] = {
+
+    Logger.info("Parsing Time: {}", time)
+
     try {
       return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mm aa")))
     } catch { case e: java.lang.IllegalArgumentException => }

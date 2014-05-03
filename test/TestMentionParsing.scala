@@ -1,18 +1,43 @@
 import models.ReminderParsing
 
-import org.joda.time.LocalTime
+import org.joda.time.{DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
 
 
 class TestMentionParsing extends JUnitSuite {
 
-  @Test def timeParsing() {
+  @Test def timeOfdayParsing() {
 
-    val timeOfday = ReminderParsing.parseTwelveHour("5:00 PM")
+    var timeOfday: Option[LocalTime] = None
+
+    timeOfday = ReminderParsing.parseTwelveHour("5:00 PM")
     assert(timeOfday.isDefined)
     assert(timeOfday.get == new LocalTime(17,0,0))
+
+    timeOfday = ReminderParsing.parseTwelveHour("5:00PM")
+    assert(timeOfday.isDefined)
+    assert(timeOfday.get == new LocalTime(17,0,0))
+
   }
+
+
+  @Test def timeParsing() {
+
+    val reminderTime = ReminderParsing.parseReminderTime("5:00 PM")
+    assert(reminderTime.isDefined)
+
+    val todayAtFive = DateTime.now()
+      .withHourOfDay(17)
+      .withMinuteOfHour(0)
+      .withSecondOfMinute(0).withMillisOfSecond(0);
+
+    assert(todayAtFive === reminderTime.get)
+
+  }
+
+
+
 
   @Test def structuredReminderA() {
     val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM every week"
@@ -30,13 +55,13 @@ class TestMentionParsing extends JUnitSuite {
 
 
   @Test def parsingA() {
-    val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM"
+    val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00 PM"
     val reminder = ReminderParsing.parseStatusText(mention)
     assert(reminder.isParsedSuccessfully)
   }
 
   @Test def parsingB() {
-    val mention = "@remindtweets Remind me to build this app at 5:00PM"
+    val mention = "@remindtweets Remind me to build this app at 5:00 PM"
     val reminder = ReminderParsing.parseStatusText(mention)
     assert(reminder.isParsedSuccessfully)
   }
