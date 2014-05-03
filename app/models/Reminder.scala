@@ -89,7 +89,7 @@ object Reminders {
   def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) {
     for (status <- statuses) {
       val tweet = TweetHelpers.fromStatus(user, status)
-      val parsed =  ReminderHelper.parseStatusText(status.getText)
+      val parsed =  ReminderParsing.parseStatusText(status.getText)
       createAndSaveIfReminder(user, tweet, parsed)
     }
   }
@@ -104,7 +104,7 @@ object Reminders {
    * @return
    */
   def isReminder(status: twitter4j.Status): Boolean = {
-    ReminderHelper.parseStatusText(status.getText) match {
+    ReminderParsing.parseStatusText(status.getText) match {
       case ReminderParsing.Success(_,_,_) => true
       case _ => false
     }
@@ -119,12 +119,23 @@ object Reminders {
   //def createReminder(status: twitter4j.Status): Option[Reminder] = {
   def createReminder(tweet: models.Tweet): Option[Reminder] = {
 
-    val parsed = ReminderHelper.parseStatusText(tweet.getStatus.getText)
+    val parsed = ReminderParsing.parseStatusText(tweet.getStatus.getText)
 
     parsed match {
       case ReminderParsing.Success(repeat, firstTime, what) =>
-         Some(Reminder(None, tweet.userId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
+        Some(Reminder(None, tweet.userId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
       case _ => None
+    }
+  }
+}
+
+object ReminderHelper {
+
+  def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
+
+    tweets.map(tweet => ReminderParsing.parseStatusText(tweet.getStatus.getText)).filter {
+      case ReminderParsing.Success(_, _, _) => true
+      case _ => false
     }
   }
 }
@@ -132,8 +143,12 @@ object Reminders {
 
 object ReminderParsing {
 
-  sealed abstract class Parsed
-  case class Success(repeat: String, firstTime: DateTime, what: String) extends Parsed
+  sealed abstract class Parsed {
+    def isParsedSuccessfully = false
+  }
+  case class Success(repeat: String, firstTime: DateTime, what: String) extends Parsed {
+    override def isParsedSuccessfully = true
+  }
   case object Failure extends Parsed
   case object DateTooEarly extends Parsed
   case object InvalidDate extends Parsed
@@ -143,18 +158,6 @@ object ReminderParsing {
   case object Never extends Repeat
   case class Every(interval: Interval) extends Repeat
 
-}
-
-
-object ReminderHelper {
-
-  def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
-
-    tweets.map(tweet => parseStatusText(tweet.getStatus.getText)).filter {
-      case ReminderParsing.Success(_,_,_) => true
-      case _ => false
-    }
-  }
 
   /**
    *
@@ -167,35 +170,35 @@ object ReminderHelper {
    */
   def parseStatusText(text: String): ReminderParsing.Parsed = {
 
-      val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+?) (every\\w?)?(.+)?",
-        "to", "what", "when", "every", "repeat")
+    val pattern = new Regex("(?iu)@RemindTweets Remind Me (to)? (.+) at (.+?) (every\\w?)?(.+)?",
+      "to", "what", "when", "every", "repeat")
 
-      Logger.info("Checking text: {}", text)
+    Logger.info("Checking text: {}", text)
 
-      val result = pattern.findFirstMatchIn(text)
-      if(result==None) {
-        Logger.info("Didn't match pattern: {}", text)
-        return ReminderParsing.Failure
-      } else {
-        Logger.info("Found match pattern: {}", text)
-      }
+    val result = pattern.findFirstMatchIn(text)
+    if(result==None) {
+      Logger.info("Didn't match pattern: {}", text)
+      return ReminderParsing.Failure
+    } else {
+      Logger.info("Found match pattern: {}", text)
+    }
 
-      val groups = result.get
-      val what = groups.group("what")
-      val repeat = groups.group("repeat").replace(" ", "")
-      val parsedTime = parseReminderTime(groups.group("when"))
+    val groups = result.get
+    val what = groups.group("what")
+    val repeat = groups.group("repeat").replace(" ", "")
+    val parsedTime = parseReminderTime(groups.group("when"))
 
-      parsedTime match {
-        case None =>
-          Logger.error("Failed to parse time {}", parsedTime)
-          ReminderParsing.Failure
-        case Some(time) =>
-          if (time.isAfter(DateTime.now())) {
-            ReminderParsing.Success(repeat, time, what)
-          } else {
-            ReminderParsing.DateTooEarly
-          }
-      }
+    parsedTime match {
+      case None =>
+        Logger.error("Failed to parse time {}", parsedTime)
+        ReminderParsing.Failure
+      case Some(time) =>
+        if (time.isAfter(DateTime.now())) {
+          ReminderParsing.Success(repeat, time, what)
+        } else {
+          ReminderParsing.DateTooEarly
+        }
+    }
   }
 
   /**

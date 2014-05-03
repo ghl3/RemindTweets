@@ -104,7 +104,7 @@ object Application extends Controller {
       Logger.info("Handling mention: {} for user {}", mention, user)
 
       val tweet = TweetHelpers.fromStatus(user.get, mention)
-      val parsed = ReminderHelper.parseStatusText(mention.getText)
+      val parsed = ReminderParsing.parseStatusText(mention.getText)
 
       Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
     }
