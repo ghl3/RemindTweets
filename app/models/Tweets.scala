@@ -1,6 +1,6 @@
 package models
 
-import org.joda.time.LocalDateTime
+import org.joda.time.DateTime
 
 import app.MyPostgresDriver.simple._
 import play.Logger
@@ -15,7 +15,7 @@ import play.api.libs.json.Json
 
 // TODO: Convert to DateTime
 // TODO: Remove the JValue as a member.  Should only take a Status, store that, and convet it to JValue for database persistence
-case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: String, content: JsValue, fetchedAt: LocalDateTime) {
+case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: String, content: JsValue, fetchedAt: DateTime) {
 
   // We internally store a twitter4j object
   // for convenience
@@ -42,7 +42,7 @@ class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
   def twitterId = column[Long]("twitterid", O.NotNull)
   def screenName = column[String]("screenName", O.NotNull)
   def content = column[JsValue]("content")
-  def fetchedAt = column[LocalDateTime]("fetchedat")
+  def fetchedAt = column[DateTime]("fetchedat")
 
   def * = (id.?, userId, twitterId, screenName, content, fetchedAt) <> (Tweet.tupled, Tweet.unapply _)
 }
@@ -78,13 +78,12 @@ object Tweets {
   object TweetHelpers {
 
     def fromStatus(user: User, status: twitter4j.Status): Tweet = {
-      val now = LocalDateTime.now()
       val statusJson: String = Converters.getJsonStringFromStatus(status)
 
       Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
       val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
 
-      return Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, now)
+      return Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
   }
 

@@ -8,6 +8,7 @@ import app.MyPostgresDriver.simple._
 import app.MyPostgresDriver.simple.Tag
 import helpers.Database.getDatabase
 import scala.util.matching.Regex
+import models.Tweets.TweetHelpers
 
 
 /**
@@ -138,7 +139,6 @@ object ReminderHelper {
       case ReminderParsing.Success(_,_,_) => true
       case _ => false
     }
-
   }
 
 
@@ -197,6 +197,43 @@ object ReminderHelper {
       case e: Exception =>
         Logger.error("Failed to parse time {}", timeString, e)
         None
+    }
+  }
+
+
+  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
+    parsed match {
+      case ReminderParsing.Success(repeat, time, what) =>
+        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
+        Tweets.insert(tweet)
+        Reminders.insert(reminder)
+        Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
+      case _ =>
+        Logger.info("Did not find reminder in tweet")
+    }
+  }
+
+
+    def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) {
+
+    for (status <- statuses) {
+
+      val tweet = TweetHelpers.fromStatus(user, status)
+      val parsed =  ReminderHelper.parseStatusText(status.getText)
+
+      createAndSaveIfReminder(user, tweet, parsed)
+
+      /*
+      ReminderHelper.parseStatusText(status.getText) match {
+        case ReminderParsing.Success(repeat, time, what) =>
+          val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
+          Tweets.insert(tweet)
+          Reminders.insert(reminder)
+          Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
+        case _ =>
+          Logger.info("Did not find reminder in tweet")
+      }
+      */
     }
   }
 
