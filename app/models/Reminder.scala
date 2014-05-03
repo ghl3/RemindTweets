@@ -2,13 +2,16 @@ package models
 
 import play.Logger
 
-import org.joda.time.{DateTime, Interval, LocalDateTime}
+import org.joda.time.{LocalTime, DateTime, Interval, LocalDateTime}
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
 import helpers.Database.getDatabase
 import scala.util.matching.Regex
 import models.Tweets.TweetHelpers
+import java.text.SimpleDateFormat
+import java.util.Date
+import org.joda.time.format.DateTimeFormat
 
 
 /**
@@ -240,12 +243,30 @@ object ReminderParsing {
    */
   def parseReminderTime(timeString: String) : Option[DateTime] = {
     try {
-      Some(DateTime.parse(timeString))
-    } catch {
-      case e: Exception =>
-        Logger.error("Failed to parse time {}", timeString, e)
-        None
+      return Some(DateTime.parse(timeString))
+    } catch { case e: Exception =>  }
+
+    val twelveHour = parseTwelveHour(timeString)
+
+    if (twelveHour.isDefined) {
+      Some(DateTime.now().withTime(twelveHour.get.getHourOfDay, twelveHour.get.getMinuteOfHour,
+        twelveHour.get.getSecondOfMinute,twelveHour.get.getMillisOfSecond))
     }
+
+    None
+
+  }
+
+  def parseTwelveHour(time: String): Option[LocalTime] = {
+    try {
+      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mm aa")))
+    } catch { case e: java.lang.IllegalArgumentException => }
+
+    try {
+      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mmaa")))
+    } catch { case e: java.lang.IllegalArgumentException => }
+
+    None
   }
 }
 
