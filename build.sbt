@@ -30,4 +30,6 @@ libraryDependencies += "jp.t2v" %% "play2-auth"      % "0.11.0"
 
 libraryDependencies += "jp.t2v" %% "play2-auth-test" % "0.11.0" % "test"
 
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
+
 play.Project.playScalaSettings

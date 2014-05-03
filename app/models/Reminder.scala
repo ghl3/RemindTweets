@@ -2,7 +2,7 @@ package models
 
 import play.Logger
 
-import org.joda.time.{Interval, LocalDateTime}
+import org.joda.time.{DateTime, Interval, LocalDateTime}
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -21,10 +21,9 @@ import models.Tweets.TweetHelpers
  * @param what The text to be sent to the user at the remind time
  * @param tweetId The id of the tweet that initiated the reminder
  */
-case class Reminder(id: Option[Long], userId: Long, createdAt: LocalDateTime,
-                    repeat: String, firstTime: LocalDateTime,
+case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
+                    repeat: String, firstTime: DateTime,
                     what: String, tweetId: Long) {
-
 
   def getScheduledReminders: List[ScheduledReminder] = {
     getDatabase().withSession{implicit session: Session =>
@@ -38,9 +37,9 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def userId = column[Long]("userid", O.NotNull)
-  def createdAt = column[LocalDateTime]("createdat")
+  def createdAt = column[DateTime]("createdat")
   def repeat = column[String]("repeat")
-  def firstTime = column[LocalDateTime]("firsttime")
+  def firstTime = column[DateTime]("firsttime")
   def what = column[String]("what")
   def tweetId = column[Long]("tweetId")
 
@@ -74,9 +73,29 @@ object Reminders {
     reminders.where(_.id === id).delete
   }
 
+  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
+    parsed match {
+      case ReminderParsing.Success(repeat, time, what) =>
+        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
+        Tweets.insert(tweet)
+        Reminders.insert(reminder)
+        ScheduledReminders.scheduleFirstReminder(reminder)
+        Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
+      case _ =>
+        Logger.info("Did not find reminder in tweet")
+    }
+  }
+
+  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) {
+    for (status <- statuses) {
+      val tweet = TweetHelpers.fromStatus(user, status)
+      val parsed =  ReminderHelper.parseStatusText(status.getText)
+      createAndSaveIfReminder(user, tweet, parsed)
+    }
+  }
 
   def createFromTweet(user: User, tweet: Tweet, parsed: ReminderParsing.Success) =  {
-    Reminder(None, user.id.get, LocalDateTime.now(),parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
+    Reminder(None, user.id.get, DateTime.now(),parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
   }
 
   /**
@@ -104,7 +123,7 @@ object Reminders {
 
     parsed match {
       case ReminderParsing.Success(repeat, firstTime, what) =>
-         Some(Reminder(None, tweet.userId, LocalDateTime.now(), repeat, firstTime, what, tweet.id.get))
+         Some(Reminder(None, tweet.userId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
       case _ => None
     }
   }
@@ -114,7 +133,7 @@ object Reminders {
 object ReminderParsing {
 
   sealed abstract class Parsed
-  case class Success(repeat: String, firstTime: LocalDateTime, what: String) extends Parsed
+  case class Success(repeat: String, firstTime: DateTime, what: String) extends Parsed
   case object Failure extends Parsed
   case object DateTooEarly extends Parsed
   case object InvalidDate extends Parsed
@@ -129,10 +148,6 @@ object ReminderParsing {
 
 object ReminderHelper {
 
-//  case class Parsed(repeat: String, firstTime: LocalDateTime, request: String)
-
-
-
   def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
 
     tweets.map(tweet => parseStatusText(tweet.getStatus.getText)).filter {
@@ -140,7 +155,6 @@ object ReminderHelper {
       case _ => false
     }
   }
-
 
   /**
    *
@@ -176,7 +190,7 @@ object ReminderHelper {
           Logger.error("Failed to parse time {}", parsedTime)
           ReminderParsing.Failure
         case Some(time) =>
-          if (time.isAfter(LocalDateTime.now())) {
+          if (time.isAfter(DateTime.now())) {
             ReminderParsing.Success(repeat, time, what)
           } else {
             ReminderParsing.DateTooEarly
@@ -184,59 +198,19 @@ object ReminderHelper {
       }
   }
 
-
   /**
    * Takes a string and returns the
    * @param timeString
    * @return
    */
-  def parseReminderTime(timeString: String) : Option[LocalDateTime] = {
+  def parseReminderTime(timeString: String) : Option[DateTime] = {
     try {
-      Some(LocalDateTime.parse(timeString))
+      Some(DateTime.parse(timeString))
     } catch {
       case e: Exception =>
         Logger.error("Failed to parse time {}", timeString, e)
         None
     }
   }
-
-
-  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
-    parsed match {
-      case ReminderParsing.Success(repeat, time, what) =>
-        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
-        Tweets.insert(tweet)
-        Reminders.insert(reminder)
-        Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
-      case _ =>
-        Logger.info("Did not find reminder in tweet")
-    }
-  }
-
-
-    def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) {
-
-    for (status <- statuses) {
-
-      val tweet = TweetHelpers.fromStatus(user, status)
-      val parsed =  ReminderHelper.parseStatusText(status.getText)
-
-      createAndSaveIfReminder(user, tweet, parsed)
-
-      /*
-      ReminderHelper.parseStatusText(status.getText) match {
-        case ReminderParsing.Success(repeat, time, what) =>
-          val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
-          Tweets.insert(tweet)
-          Reminders.insert(reminder)
-          Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
-        case _ =>
-          Logger.info("Did not find reminder in tweet")
-      }
-      */
-    }
-  }
-
-
 }
 

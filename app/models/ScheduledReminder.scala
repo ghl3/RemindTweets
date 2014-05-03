@@ -1,6 +1,6 @@
 package models
 
-import org.joda.time.LocalDateTime
+import org.joda.time.{DateTime, LocalDateTime}
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -22,8 +22,15 @@ import app.MyPostgresDriver.simple.Tag
  * @param executed
  */
 case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long,
-                             time: LocalDateTime, executed: Boolean, cancelled: Boolean)
+                             time: DateTime, executed: Boolean, cancelled: Boolean) {
 
+  def this(id: Option[Long], reminderId: Long, userId: Long, time: DateTime) = this(id, reminderId, userId, time, false, false)
+
+  def getReminder(implicit s: Session): Option[Reminder] = {
+    Reminders.findById(reminderId)
+  }
+
+}
 
 // Definition of the COFFEES table
 class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "scheduledreminders") {
@@ -31,7 +38,7 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def reminderId = column[Long]("reminderid", O.NotNull)
   def userId = column[Long]("userid", O.NotNull)
-  def time = column[LocalDateTime]("time")
+  def time = column[DateTime]("time")
   def executed = column[Boolean]("executed")
   def cancelled = column[Boolean]("cancelled")
 
@@ -62,6 +69,16 @@ object ScheduledReminders {
 
   def delete(id: Long)(implicit s: Session) {
     scheduledReminders.where(_.id === id).delete
+  }
+
+
+
+  def scheduleFirstReminder(reminder: Reminder)(implicit s: Session) {
+
+    val scheduledReminder = ScheduledReminder(None, reminder.id.get, reminder.userId,
+      reminder.firstTime, false, false)
+
+    scheduledReminders.insert(scheduledReminder)
   }
 
 }

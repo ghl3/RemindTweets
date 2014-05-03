@@ -1,10 +1,8 @@
 package controllers
 
 import play.Logger
-import helpers.TwitterApi
+import helpers.{ReminderIssuer, TwitterApi, Converters}
 import scala.collection.JavaConverters._
-
-import helpers.Converters
 
 import play.api.mvc._
 import models._
@@ -77,25 +75,9 @@ object Application extends Controller {
       // Now that we've got the user, let's get his tweets
       val timeline: Iterable[twitter4j.Status] = TwitterApi.getUserTimeline(screenName).asScala
 
-      ReminderHelper.createRemindersFromUserTwitterStatuses(user.get, timeline)
+      Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
       Ok("SUP")
 
-/*
-      val tweets = Tweets.getUserTweetsFromTimeline(user.get, timeline)
-
-      for (tweet <- tweets) {
-        Logger.info("Checking tweet: %s".format(tweet))
-        ReminderHelper.parseStatusText(tweet.getStatus.getText) match {
-          case ReminderParsing.Success(repeat, time, what) =>
-            val reminder = Reminders.createFromTweet(user.get, tweet, ReminderParsing.Success(repeat, time, what))
-            Tweets.insert(tweet)
-            Reminders.insert(reminder)
-            Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
-          case _ =>
-            Logger.info("Did not find reminder in tweet")
-        }
-      }
-      */
     }
   }
 
@@ -109,6 +91,13 @@ object Application extends Controller {
 
     for (mention <- mentions) {
 
+      val jsonString = Converters.getJsonStringFromStatus(mention)
+      Logger.info("Got JSON String: {}", jsonString)
+
+
+      val json = Converters.getJsonFromStatus(mention)
+      Logger.info("Got JSON: {}", json)
+
       // Check if it's an existing user
       val user = Users.getOrCreateUser(mention.getUser.getScreenName)
 
@@ -117,7 +106,7 @@ object Application extends Controller {
       val tweet = TweetHelpers.fromStatus(user.get, mention)
       val parsed = ReminderHelper.parseStatusText(mention.getText)
 
-      ReminderHelper.createAndSaveIfReminder(user.get, tweet, parsed)
+      Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
     }
 
     Logger.info("Putting into mentions")
@@ -131,6 +120,12 @@ object Application extends Controller {
 
     Logger.info("Status: {}", status)
     Ok(views.html.index("Fish"))
+  }
+
+
+  def issueReminders = DBAction { implicit rs =>
+    ReminderIssuer.issueReminders
+    Ok("SUP")
   }
 
 /*
