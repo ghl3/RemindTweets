@@ -1,0 +1,19 @@
+@(user: User, reminders: List[Reminder])
+
+@import helpers._
+@import twitter4j.{ResponseList,Status}
+
+@main("User") {
+
+User: @user.screenName
+
+<ul>
+    @reminders.map { reminder =>
+    <li>
+       Remind me to @reminder.what @reminder.firstTime
+    </li>
+    }
+</ul>
+
+
+}
