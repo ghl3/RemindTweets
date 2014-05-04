@@ -94,7 +94,6 @@ object Application extends Controller {
       val jsonString = Converters.getJsonStringFromStatus(mention)
       Logger.info("Got JSON String: {}", jsonString)
 
-
       val json = Converters.getJsonFromStatus(mention)
       Logger.info("Got JSON: {}", json)
 

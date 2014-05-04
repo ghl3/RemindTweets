@@ -9,15 +9,12 @@ import app.MyPostgresDriver.simple.Tag
 import helpers.Database.getDatabase
 import scala.util.matching.Regex
 import models.Tweets.TweetHelpers
-import java.text.SimpleDateFormat
-import java.util.Date
+
 import org.joda.time.format.DateTimeFormat
-import models.Reminder
-import models.ScheduledReminder
+
 import scala.Some
-import models.User
-import models.Tweet
-import play.libs.Scala
+import models.Repeat.Frequency
+import java.lang.reflect.InvocationTargetException
 
 
 /**
@@ -31,7 +28,7 @@ import play.libs.Scala
  * @param tweetId The id of the tweet that initiated the reminder
  */
 case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
-                    repeat: Option[String], firstTime: DateTime,
+                    repeat: Frequency, firstTime: DateTime,
                     what: String, tweetId: Long) {
 
   def getScheduledReminders: List[ScheduledReminder] = {
@@ -41,18 +38,22 @@ case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
   }
 }
 
+object Repeat extends Enumeration {
+  type Frequency = Value
+  val Never, Daily, Weekly, Monthly, EveryHour = Value
+}
 
 class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def userId = column[Long]("userid", O.NotNull)
   def createdAt = column[DateTime]("createdat")
-  def repeat = column[String]("repeat")
+  def repeat = column[Frequency]("repeat")
   def firstTime = column[DateTime]("firsttime")
   def what = column[String]("what")
   def tweetId = column[Long]("tweetId")
 
-  def * = (id.?,  userId, createdAt, repeat.?, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
+  def * = (id.?,  userId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
 }
 
@@ -84,8 +85,8 @@ object Reminders {
 
   def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
     parsed match {
-      case ReminderParsing.Success(repeat, time, what) =>
-        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(repeat, time, what))
+      case ReminderParsing.Success(what, time, repeat) =>
+        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(what, time, repeat))
         Tweets.insert(tweet)
         Reminders.insert(reminder)
         ScheduledReminders.scheduleFirstReminder(reminder)
@@ -155,20 +156,13 @@ object ReminderParsing {
   sealed abstract class Parsed {
     def isParsedSuccessfully = false
   }
-  case class Success(what: String, firstTime: DateTime, repeat: Option[String]) extends Parsed {
+  case class Success(what: String, firstTime: DateTime, repeat: Frequency) extends Parsed {
     override def isParsedSuccessfully = true
   }
   case object Failure extends Parsed
   case object DateTooEarly extends Parsed
   case object InvalidDate extends Parsed
   case object NoWhat extends Parsed
-
-
-  // TODO: Replace the repeat value with this
-  sealed abstract class Repeat
-  case object Never extends Repeat
-  case class Every(interval: Interval) extends Repeat
-
 
   val pattern = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
@@ -232,8 +226,7 @@ object ReminderParsing {
       return ReminderParsing.NoWhat
     }
 
-    val repeat = groupMap.get("repeat")
-
+    val repeat = getRepeatFrequency(groupMap.get("repeat"))
     val parsedTime = parseReminderTime(groupMap.get("time"), groupMap.get("when"))
 
     parsedTime match {
@@ -247,6 +240,26 @@ object ReminderParsing {
           ReminderParsing.DateTooEarly
         }
     }
+  }
+
+
+  def getRepeatFrequency(repeat: Option[String]): Frequency = {
+
+    if (repeat.isEmpty) {
+      return Repeat.Never
+    }
+
+    val freq = repeat.get
+
+    val weekly = """(?i).*week.*""".r
+
+     freq match {
+      case weekly() => Repeat.Weekly
+      case _ => try {
+        Repeat.withName(freq)
+      } catch {case e: InvocationTargetException => Repeat.Never
+      }
+     }
   }
 
   /**
@@ -299,7 +312,8 @@ object ReminderParsing {
     // Then, parse the date
     val date: LocalDate = parseDate(dateString)
 
-    date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour, timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
+    date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour,
+      timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
   }
 
 

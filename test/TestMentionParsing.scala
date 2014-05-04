@@ -1,6 +1,6 @@
-import models.ReminderParsing
+import models.{Repeat, ReminderParsing}
 
-import org.joda.time.{LocalDateTime, DateTime, LocalTime}
+import org.joda.time.{DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
 
@@ -59,12 +59,11 @@ class TestMentionParsing extends JUnitSuite {
 
     parsed match {
       case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === None)
+        assert(repeat === Repeat.Never)
         assert(what === "build this app")
         assert(firstTime === DateTime.now().plusDays(1).withTime(18,0,0,0))
       case _ => assert(false)
     }
-
   }
 
   @Test def parsingB() {
@@ -74,12 +73,11 @@ class TestMentionParsing extends JUnitSuite {
 
     parsed match {
       case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === None)
+        assert(repeat === Repeat.Never)
         assert(what === "build this app")
         assert(firstTime === DateTime.now().plusDays(1).withTime(0,1,0,0))
       case _ => assert(false)
     }
-
   }
 
   @Test def parsingC() {
@@ -89,7 +87,7 @@ class TestMentionParsing extends JUnitSuite {
 
     parsed match {
       case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === Some("week"))
+        assert(repeat === Repeat.Weekly)
         assert(what === "build this app")
 
         var assertTime = DateTime.now().withDayOfWeek(3).withTime(18,0,0,0)
@@ -99,7 +97,6 @@ class TestMentionParsing extends JUnitSuite {
         assert(firstTime === assertTime)
       case _ => assert(false)
     }
-
   }
 
 
