@@ -2,24 +2,32 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+
 # Home page
-GET     /                           controllers.Application.index
+GET   /                             controllers.Application.index
 
 
-GET   /tweets/:id                   controllers.Application.tweet(id: Long)
+# User views
+GET   /user/:screenName             controllers.RestUser.user(screenName: String)
+GET   /user/:screenName/timeline    controllers.RestUser.userTimeline(screenName: String)
 
 
-GET /userTimeline/:screenName       controllers.Application.userTimeline(screenName: String)
+# Reminders
+GET   /reminder/:id                 controllers.RestReminder.reminder(id: Long)
 
-# Mentions
-GET     /mentions                   controllers.Application.mentions
 
-GET     /testMentions               controllers.Application.testMentions
+# Misc
+#GET   /scheduledreminder/:id        controllers.Application.scheduledreminder(id: Long)
+#GET   /tweets/:id                   controllers.Application.tweet(id: Long)
 
-#GET     /addTweet                   controllers.Application.addTweet
 
-POST     /tweet                     controllers.Application.addTweet(userId: Long)
-# GET      /tweet                     controllers.Application.getTweet(id: Long)
+# Admin API
+GET   /mentions                     controllers.Application.mentions
+GET   /testMentions                 controllers.Application.testMentions
+POST  /tweet                        controllers.Application.addTweet(userId: Long)
+
+# GET   /tweet                      controllers.Application.getTweet(id: Long)
+# GET   /addTweet                   controllers.Application.addTweet
 
 
 GET /checkForReminders/:screenName              controllers.Application.checkForReminders(screenName: String)
@@ -27,5 +35,4 @@ GET /checkForReminders/:screenName              controllers.Application.checkFor
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
-
 GET     /issueReminders                   controllers.Application.issueReminders

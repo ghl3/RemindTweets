@@ -1,19 +1,15 @@
 package controllers
 
-import play.Logger
-import helpers.{ReminderIssuer, TwitterApi, Converters}
+import helpers.TwitterApi
 import scala.collection.JavaConverters._
 
 import play.api.mvc._
 import models._
-import org.joda.time.DateTime
 
 import play.api.db.slick._
 
 import play.api.libs.json.Json
-import models.Tweet
-import scala.Some
-import models.Tweets.TweetHelpers
+
 
 object RestUser extends Controller {
 

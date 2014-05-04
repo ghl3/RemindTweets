@@ -8,7 +8,7 @@ import app.MyPostgresDriver.simple._
 case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
 
 
-  def getReminders(id: Long)(implicit s: Session): List[Reminder] = {
+  def getReminders()(implicit s: Session): List[Reminder] = {
     Reminders.reminders.where(_.userId === id).list
   }
 

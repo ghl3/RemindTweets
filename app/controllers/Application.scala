@@ -22,7 +22,6 @@ object Application extends Controller {
       Ok(views.html.index("Your new application is ready."))
   }
 
-
   def tweet(id: Long) = DBAction { implicit rs =>
     Ok(Tweets.findById(id).get.content)
   }
@@ -35,21 +34,8 @@ object Application extends Controller {
         val updatedTweet = Tweets.insertAndGet(myTweet)
         Ok(views.html.index("Your new application is ready: " + updatedTweet))
       case None =>
-        NotFound("User with id %s was not found" format userId)
+        NotFound("User with id %s was not found".format(userId))
     }
-  }
-
-
-  def userTimeline(screenName: String) = DBAction { implicit rs =>
-
-    val timeline = TwitterApi.getUserTimeline(screenName).asScala
-
-    val format = new java.text.SimpleDateFormat("dd-MM-yyyy")
-
-    val texts = for (status <- timeline) yield Json.obj("status" -> status.getText,
-      "createdAt" -> format.format(status.getCreatedAt))
-
-    Ok(Json.arr(texts))
   }
 
 
