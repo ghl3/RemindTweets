@@ -1,6 +1,6 @@
 import models.ReminderParsing
 
-import org.joda.time.{DateTime, LocalTime}
+import org.joda.time.{LocalDateTime, DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
 
@@ -37,8 +37,6 @@ class TestMentionParsing extends JUnitSuite {
   }
 
 
-
-
   @Test def structuredReminderA() {
     val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM every week"
     val structured = ReminderParsing.getStructuredReminderResult(mention)
@@ -55,21 +53,31 @@ class TestMentionParsing extends JUnitSuite {
 
 
   @Test def parsingA() {
-    val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00 PM"
-    val reminder = ReminderParsing.parseStatusText(mention)
-    assert(reminder.isParsedSuccessfully)
+    val mention = "@remindtweets Remind me to build this app on Wednesday at 6:00 PM"
+    val parsed = ReminderParsing.parseStatusText(mention)
+    assert(parsed.isParsedSuccessfully)
+
+    parsed match {
+      case ReminderParsing.Success(repeat, firstTime, what) => {
+        assert(repeat === null)
+        assert(what === "build this app")
+        assert(firstTime === DateTime.now().withTime(18,0,0,0))
+      }
+      case _ => assert(false)
+    }
+
   }
 
   @Test def parsingB() {
-    val mention = "@remindtweets Remind me to build this app at 5:00 PM"
-    val reminder = ReminderParsing.parseStatusText(mention)
-    assert(reminder.isParsedSuccessfully)
+    val mention = "@remindtweets Remind me to build this app at 6:00 PM"
+    val parsed = ReminderParsing.parseStatusText(mention)
+    assert(parsed.isParsedSuccessfully)
   }
 
   @Test def parsingC() {
-    val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM every week"
-    val reminder = ReminderParsing.parseStatusText(mention)
-    assert(reminder.isParsedSuccessfully)
+    val mention = "@remindtweets Remind me to build this app on Wednesday at 6:00PM every week"
+    val parsed = ReminderParsing.parseStatusText(mention)
+    assert(parsed.isParsedSuccessfully)
   }
 
 
