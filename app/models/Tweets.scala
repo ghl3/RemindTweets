@@ -38,9 +38,9 @@ case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: St
 class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc) // This is the primary key column
-  def userId = column[Long]("userId")
-  def twitterId = column[Long]("twitterid", O.NotNull)
-  def screenName = column[String]("screenName", O.NotNull)
+  def userId = column[Long]("user_id")
+  def twitterId = column[Long]("twitter_id", O.NotNull)
+  def screenName = column[String]("screen_name", O.NotNull)
   def content = column[JsValue]("content")
   def fetchedAt = column[DateTime]("fetchedat")
 

@@ -22,7 +22,7 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
 class Users(tag: Tag) extends Table[User](tag, "users") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def screenName = column[String]("screenname", O.NotNull)
+  def screenName = column[String]("screen_name", O.NotNull)
   def createdAt = column[LocalDateTime]("createdat")
 
   def * = (id.?, screenName, createdAt) <> (User.tupled, User.unapply _)

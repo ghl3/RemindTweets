@@ -36,8 +36,8 @@ case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long,
 class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "scheduledreminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def reminderId = column[Long]("reminderid", O.NotNull)
-  def userId = column[Long]("userid", O.NotNull)
+  def reminderId = column[Long]("reminder_id", O.NotNull)
+  def userId = column[Long]("user_id", O.NotNull)
   def time = column[DateTime]("time")
   def executed = column[Boolean]("executed")
   def cancelled = column[Boolean]("cancelled")

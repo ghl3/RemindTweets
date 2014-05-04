@@ -46,12 +46,12 @@ object Repeat extends Enumeration {
 class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def userId = column[Long]("userid", O.NotNull)
+  def userId = column[Long]("user_id", O.NotNull)
   def createdAt = column[DateTime]("createdat")
   def repeat = column[Frequency]("repeat")
   def firstTime = column[DateTime]("firsttime")
   def what = column[String]("what")
-  def tweetId = column[Long]("tweetId")
+  def tweetId = column[Long]("tweet_id")
 
   def * = (id.?,  userId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
