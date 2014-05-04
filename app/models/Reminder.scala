@@ -2,7 +2,7 @@ package models
 
 import play.Logger
 
-import org.joda.time.{LocalTime, DateTime, Interval, LocalDateTime}
+import org.joda.time._
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -12,6 +12,12 @@ import models.Tweets.TweetHelpers
 import java.text.SimpleDateFormat
 import java.util.Date
 import org.joda.time.format.DateTimeFormat
+import models.Reminder
+import models.ScheduledReminder
+import scala.Some
+import models.User
+import models.Tweet
+import play.libs.Scala
 
 
 /**
@@ -242,6 +248,8 @@ object ReminderParsing {
    * @return
    */
   def parseReminderTime(timeString: String) : Option[DateTime] = {
+
+    // Check if it's a pure DateTime
     try {
       return Some(DateTime.parse(timeString))
     } catch { case e: Exception =>  }
@@ -254,8 +262,103 @@ object ReminderParsing {
     }
 
     None
-
   }
+
+  def parseReminderTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
+    if (time.isDefined && when.isDefined) {
+      Some(parseTimeAndDate(time.get, when.get))
+    }
+    else if (time.isDefined) {
+      Some(parseTimeTodayOrTomorrow(time.get))
+    }
+    else if (when.isDefined) {
+      Some(parseDate(when.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
+    }
+    else {
+      None
+    }
+  }
+
+
+  def parseTimeAndDate(timeString: String, dateString: String): DateTime = {
+
+    // First, parse the time of day string
+    val timeOfDay: LocalTime = try {
+      parseTwelveHour(timeString).get
+    } catch {
+      case e: Exception => DateTime.now().toLocalTime
+    }
+
+    // Then, parse the date
+    val date: LocalDate = parseDate(dateString)
+
+    date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour, timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
+  }
+
+
+  def parseDate(dateString: String): LocalDate = {
+    dateString match {
+      case "Today" => LocalDate.now()
+      case "Tomorrow" => LocalDate.now().plusDays(1)
+      case "Monday" => getNextDayOfWeek(DateTimeConstants.MONDAY)
+      case "Tuesday" => getNextDayOfWeek(DateTimeConstants.TUESDAY)
+      case "Wednesday" => getNextDayOfWeek(DateTimeConstants.WEDNESDAY)
+      case "Thursday" => getNextDayOfWeek(DateTimeConstants.THURSDAY)
+      case "Friday" => getNextDayOfWeek(DateTimeConstants.FRIDAY)
+      case "Saturday" => getNextDayOfWeek(DateTimeConstants.SATURDAY)
+      case "Sunday" => getNextDayOfWeek(DateTimeConstants.SUNDAY)
+      case _ => LocalDate.now()
+    }
+  }
+
+  def getNextDayOfWeek(dayOfWeek: Int) = {
+    val d: LocalDate = LocalDate.now()
+    if (d.getDayOfWeek >= dayOfWeek) {
+      d.plusWeeks(1)
+    } else {
+      d.withDayOfWeek(dayOfWeek)
+    }
+  }
+
+  def parseTimeTodayOrTomorrow(timeString: String): DateTime = {
+
+    val time: LocalTime = parseTwelveHour(timeString).get
+
+    val timeAtToday = setTime(DateTime.now(), time)
+    if (timeAtToday.isAfter(DateTime.now())) {
+      timeAtToday
+    } else {
+      setTime(DateTime.now().plusDays(1), time)
+    }
+  }
+
+
+  def setTime(dateTime: DateTime , time: LocalTime) = {
+    dateTime.withTime(time.getHourOfDay, time.getMinuteOfHour, time.getSecondOfMinute, time.getMillisOfSecond)
+  }
+
+  /*
+    return DateTime(
+
+  return
+
+  if (when) {
+      parseDate(when).toDate()
+    } else if (timeOfDay.isAfter(DateTime.now().toLocalTime())) {
+      DateTime.now().toDate()
+    } else {
+      DateTime.now().plusDays(1).toDate()
+    }
+
+
+    None
+  }
+
+
+  def parseDate(when: String): DateTime = {
+    null
+  }
+*/
 
   def parseTwelveHour(time: String): Option[LocalTime] = {
 
