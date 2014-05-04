@@ -10,3 +10,8 @@ CREATE DATABASE remindtweets
        TABLESPACE = pg_default
        CONNECTION LIMIT = -1;
 END_OF_FILE
+
+
+psql remindtweets remindtweets <<EOF
+CREATE TYPE repeat AS ENUM ('Never', 'Daily', 'Weekly', 'Monthly', 'EveryHour')
+EOF

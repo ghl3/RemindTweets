@@ -13,4 +13,4 @@ dist
 /.project
 /RUNNING_PID
 /.settings
-setup.sh
+scripts/setup_twitter.sh

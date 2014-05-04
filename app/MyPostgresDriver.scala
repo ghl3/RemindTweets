@@ -3,7 +3,7 @@ package app
 import scala.slick.driver.PostgresDriver
 import com.github.tminglei.slickpg._
 import models.Repeat
-
+import models.Repeat.Frequency
 
 trait WithMyDriver {
   val driver: MyPostgresDriver
@@ -20,8 +20,8 @@ with PgPlayJsonSupport
 with PgSearchSupport
 with PgEnumSupport {
 
-  override val Implicit = new ImplicitsPlus with MyEnumImplicits  {}
-  override val simple = new SimpleQLPlus with MyEnumImplicits {}
+  override val Implicit = new ImplicitsPlus {}//with MyEnumImplicits  {}
+  override val simple = new SimpleQLPlus {} //with MyEnumImplicits {}
 
   trait MyEnumImplicits {
     implicit val repeatMapper = createEnumJdbcType("repeat", Repeat)
@@ -40,10 +40,12 @@ with PgEnumSupport {
   with HStoreImplicits
   with JsonImplicits
   with SearchImplicits
+  with MyEnumImplicits
 
   trait SimpleQLPlus extends SimpleQL
   with ImplicitsPlus
   with SearchAssistants
+  with MyEnumImplicits
 }
 
 object MyPostgresDriver extends MyPostgresDriver

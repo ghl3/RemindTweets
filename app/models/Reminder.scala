@@ -86,10 +86,10 @@ object Reminders {
   def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
     parsed match {
       case ReminderParsing.Success(what, time, repeat) =>
-        val reminder = Reminders.createFromTweet(user, tweet, ReminderParsing.Success(what, time, repeat))
-        Tweets.insert(tweet)
-        Reminders.insert(reminder)
-        ScheduledReminders.scheduleFirstReminder(reminder)
+        val savedTweet = Tweets.insertAndGet(tweet)
+        val reminder = Reminders.createFromTweet(user, savedTweet, ReminderParsing.Success(what, time, repeat))
+        val savedReminder = Reminders.insertAndGet(reminder)
+        ScheduledReminders.scheduleFirstReminder(savedReminder)
         Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
       case _ =>
         Logger.info("Did not find reminder in tweet")
