@@ -31,7 +31,7 @@ import play.libs.Scala
  * @param tweetId The id of the tweet that initiated the reminder
  */
 case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
-                    repeat: String, firstTime: DateTime,
+                    repeat: Option[String], firstTime: DateTime,
                     what: String, tweetId: Long) {
 
   def getScheduledReminders: List[ScheduledReminder] = {
@@ -52,7 +52,7 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
   def what = column[String]("what")
   def tweetId = column[Long]("tweetId")
 
-  def * = (id.?,  userId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
+  def * = (id.?,  userId, createdAt, repeat.?, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
 }
 
@@ -104,7 +104,7 @@ object Reminders {
   }
 
   def createFromTweet(user: User, tweet: Tweet, parsed: ReminderParsing.Success) =  {
-    Reminder(None, user.id.get, DateTime.now(),parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
+    Reminder(None, user.id.get, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
   }
 
   /**
@@ -131,7 +131,7 @@ object Reminders {
     val parsed = ReminderParsing.parseStatusText(tweet.getStatus.getText)
 
     parsed match {
-      case ReminderParsing.Success(repeat, firstTime, what) =>
+      case ReminderParsing.Success(what, firstTime, repeat) =>
         Some(Reminder(None, tweet.userId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
       case _ => None
     }
@@ -155,12 +155,14 @@ object ReminderParsing {
   sealed abstract class Parsed {
     def isParsedSuccessfully = false
   }
-  case class Success(repeat: String, firstTime: DateTime, what: String) extends Parsed {
+  case class Success(what: String, firstTime: DateTime, repeat: Option[String]) extends Parsed {
     override def isParsedSuccessfully = true
   }
   case object Failure extends Parsed
   case object DateTooEarly extends Parsed
   case object InvalidDate extends Parsed
+  case object NoWhat extends Parsed
+
 
   // TODO: Replace the repeat value with this
   sealed abstract class Repeat
@@ -177,7 +179,7 @@ object ReminderParsing {
   }
 
   def convertRegexToGroupMap(matched: Regex.Match): Map[String,String] = {
-    (for ((name, group) <- matched.groupNames zip matched.subgroups) yield name -> group).toMap
+    (for ((name, group) <- matched.groupNames zip matched.subgroups if(group != null)) yield name -> group).toMap
   }
 
   /**
@@ -224,10 +226,15 @@ object ReminderParsing {
     //val repeat = groups.group("repeat").replace(" ", "")
     //val parsedTime = parseReminderTime(groups.group("when"))
 
-    val what = groupMap("what")
-    val repeat = groupMap("repeat")
+    val what = groupMap.get("what")
 
-    val parsedTime = parseReminderTime(groupMap("time"))
+    if (what.isEmpty) {
+      return ReminderParsing.NoWhat
+    }
+
+    val repeat = groupMap.get("repeat")
+
+    val parsedTime = parseReminderTime(groupMap.get("time"), groupMap.get("when"))
 
     parsedTime match {
       case None =>
@@ -235,7 +242,7 @@ object ReminderParsing {
         ReminderParsing.Failure
       case Some(time) =>
         if (time.isAfter(DateTime.now())) {
-          ReminderParsing.Success(repeat, time, what)
+          ReminderParsing.Success(what.get, time, repeat)
         } else {
           ReminderParsing.DateTooEarly
         }
