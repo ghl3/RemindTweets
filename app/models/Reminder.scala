@@ -179,7 +179,7 @@ object ReminderParsing {
   }
 
   def convertRegexToGroupMap(matched: Regex.Match): Map[String,String] = {
-    (for ((name, group) <- matched.groupNames zip matched.subgroups if(group != null)) yield name -> group).toMap
+    (for ((name, group) <- matched.groupNames zip matched.subgroups if group != null) yield name -> group).toMap
   }
 
   /**
@@ -319,13 +319,14 @@ object ReminderParsing {
   }
 
   def getNextDayOfWeek(dayOfWeek: Int) = {
-    val d: LocalDate = LocalDate.now()
-    if (d.getDayOfWeek >= dayOfWeek) {
+    val d: LocalDate = LocalDate.now().withDayOfWeek(dayOfWeek)
+    if (d.isBefore(LocalDate.now())) {
       d.plusWeeks(1)
     } else {
-      d.withDayOfWeek(dayOfWeek)
+      d
     }
   }
+
 
   def parseTimeTodayOrTomorrow(timeString: String): DateTime = {
 
