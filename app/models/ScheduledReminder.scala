@@ -1,6 +1,6 @@
 package models
 
-import org.joda.time.{DateTime, LocalDateTime}
+import org.joda.time.DateTime
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
@@ -21,15 +21,30 @@ import app.MyPostgresDriver.simple.Tag
  * @param time
  * @param executed
  */
-case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long,
-                             time: DateTime, executed: Boolean, cancelled: Boolean) {
+case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long, time: DateTime,
+                             executed: Boolean, cancelled: Boolean, inProgress: Boolean, failed: Boolean) {
 
-  def this(id: Option[Long], reminderId: Long, userId: Long, time: DateTime) = this(id, reminderId, userId, time, false, false)
+  def this(id: Option[Long], reminderId: Long, userId: Long, time: DateTime) = this(id, reminderId, userId, time, false, false, false, false)
 
   def getReminder(implicit s: Session): Option[Reminder] = {
     Reminders.findById(reminderId)
   }
 
+  def setInProgress(progress: Boolean=true): ScheduledReminder = {
+    this.copy(inProgress=progress, executed=false, cancelled=false, failed=false)
+  }
+
+  def setExecuted(executed: Boolean=true): ScheduledReminder = {
+    this.copy(inProgress=false, executed=executed, cancelled=false, failed=false)
+  }
+
+  def setCancelled(cancelled: Boolean=true): ScheduledReminder = {
+    this.copy(inProgress=false, executed=false, cancelled=cancelled, failed=false)
+  }
+
+  def setFailed(failed: Boolean=true): ScheduledReminder = {
+    this.copy(inProgress=false, executed=false, cancelled=false, failed=failed)
+  }
 }
 
 // Definition of the COFFEES table
@@ -41,8 +56,11 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
   def time = column[DateTime]("time")
   def executed = column[Boolean]("executed")
   def cancelled = column[Boolean]("cancelled")
+  def inProgress = column[Boolean]("in_progress")
+  def failed = column[Boolean]("failed")
 
-  def * = (id.?, reminderId, userId, time, executed, cancelled) <> (ScheduledReminder.tupled, ScheduledReminder.unapply)
+
+  def * = (id.?, reminderId, userId, time, executed, cancelled, inProgress, failed) <> (ScheduledReminder.tupled, ScheduledReminder.unapply)
 }
 
 object ScheduledReminders {
@@ -59,7 +77,7 @@ object ScheduledReminders {
 
   def insertAndGet(scheduledReminder: ScheduledReminder)(implicit s: Session): ScheduledReminder = {
     val userId = (scheduledReminders returning scheduledReminders.map(_.id)) += scheduledReminder
-    return scheduledReminder.copy(id = Some(userId))
+    scheduledReminder.copy(id = Some(userId))
   }
 
   def update(id: Long, scheduledReminder: ScheduledReminder)(implicit s: Session) {
@@ -71,13 +89,10 @@ object ScheduledReminders {
     scheduledReminders.where(_.id === id).delete
   }
 
-
-
   def scheduleFirstReminder(reminder: Reminder)(implicit s: Session) {
 
-    val scheduledReminder = ScheduledReminder(None, reminder.id.get, reminder.userId,
-      reminder.firstTime, false, false)
-
+    val scheduledReminder = new ScheduledReminder(None, reminder.id.get, reminder.userId, reminder.firstTime)
+    //executed=false, cancelled=false, inProgress=false, failed=false)
     scheduledReminders.insert(scheduledReminder)
   }
 
