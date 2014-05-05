@@ -90,10 +90,17 @@ object ScheduledReminders {
   }
 
   def scheduleFirstReminder(reminder: Reminder)(implicit s: Session) {
-
     val scheduledReminder = new ScheduledReminder(None, reminder.id.get, reminder.userId, reminder.firstTime)
-    //executed=false, cancelled=false, inProgress=false, failed=false)
     scheduledReminders.insert(scheduledReminder)
+  }
+
+  def getRemindersToSchedule(minDateTime: DateTime, maxDateTime: DateTime)(implicit s: Session) = {
+    scheduledReminders.filter(_.executed===false)
+      .filter(_.cancelled===false)
+      .filter(_.inProgress===false)
+      .filter(_.failed===false)
+      .filter(_.time > minDateTime)
+      .filter(_.time < maxDateTime).list
   }
 
 }

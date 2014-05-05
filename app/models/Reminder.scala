@@ -6,7 +6,6 @@ import org.joda.time._
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
-import helpers.Database.getDatabase
 import scala.util.matching.Regex
 import models.Tweets.TweetHelpers
 
@@ -31,11 +30,15 @@ case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
                     repeat: Frequency, firstTime: DateTime,
                     what: String, tweetId: Long) {
 
-  def getScheduledReminders: List[ScheduledReminder] = {
-    getDatabase().withSession{implicit session: Session =>
-      return (for { b <- ScheduledReminders.scheduledReminders if b.reminderId is this.id} yield b).list
-    }
+
+  def getScheduledReminders(implicit s: Session): List[ScheduledReminder] = {
+    (for { b <- ScheduledReminders.scheduledReminders if b.reminderId is this.id} yield b).list
   }
+
+  def getUser(implicit s: Session): Option[User] = {
+    Users.findById(this.userId)
+  }
+
 }
 
 object Repeat extends Enumeration {
@@ -74,16 +77,16 @@ object Reminders {
     reminder.copy(id = Some(userId))
   }
 
-  def update(id: Long, reminder: Reminder)(implicit s: Session) {
+  def update(id: Long, reminder: Reminder)(implicit s: Session) = {
     val reminderToUpdate: Reminder = reminder.copy(Some(id))
     reminders.where(_.id === id).update(reminderToUpdate)
   }
 
-  def delete(id: Long)(implicit s: Session) {
+  def delete(id: Long)(implicit s: Session) = {
     reminders.where(_.id === id).delete
   }
 
-  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) {
+  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) = {
     parsed match {
       case ReminderParsing.Success(what, time, repeat) =>
         val savedTweet = Tweets.insertAndGet(tweet)
@@ -96,7 +99,7 @@ object Reminders {
     }
   }
 
-  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) {
+  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) = {
     for (status <- statuses) {
       val tweet = TweetHelpers.fromStatus(user, status)
       val parsed =  ReminderParsing.parseStatusText(status.getText)
@@ -126,7 +129,6 @@ object Reminders {
    * @param tweet
    * @return
    */
-  //def createReminder(status: twitter4j.Status): Option[Reminder] = {
   def createReminder(tweet: models.Tweet): Option[Reminder] = {
 
     val parsed = ReminderParsing.parseStatusText(tweet.getStatus.getText)
@@ -205,7 +207,7 @@ object ReminderParsing {
 
     Logger.info("Checking text: {}", text)
 
-    val result = getResultOfReminderRegex(text) //pattern.findFirstMatchIn(text)
+    val result = getResultOfReminderRegex(text)
     if(result.isEmpty) {
       Logger.info("Didn't match pattern: {}", text)
       return ReminderParsing.Failure
@@ -214,11 +216,6 @@ object ReminderParsing {
     Logger.info("Found match pattern: {}", text)
 
     val groupMap = convertRegexToGroupMap(result.get)
-
-    //val groups = result.get
-    //val what = groups.group("what")
-    //val repeat = groups.group("repeat").replace(" ", "")
-    //val parsedTime = parseReminderTime(groups.group("when"))
 
     val what = groupMap.get("what")
 
@@ -341,7 +338,6 @@ object ReminderParsing {
     }
   }
 
-
   def parseTimeTodayOrTomorrow(timeString: String): DateTime = {
 
     val time: LocalTime = parseTwelveHour(timeString).get
@@ -354,33 +350,9 @@ object ReminderParsing {
     }
   }
 
-
   def setTime(dateTime: DateTime , time: LocalTime) = {
     dateTime.withTime(time.getHourOfDay, time.getMinuteOfHour, time.getSecondOfMinute, time.getMillisOfSecond)
   }
-
-  /*
-    return DateTime(
-
-  return
-
-  if (when) {
-      parseDate(when).toDate()
-    } else if (timeOfDay.isAfter(DateTime.now().toLocalTime())) {
-      DateTime.now().toDate()
-    } else {
-      DateTime.now().plusDays(1).toDate()
-    }
-
-
-    None
-  }
-
-
-  def parseDate(when: String): DateTime = {
-    null
-  }
-*/
 
   def parseTwelveHour(time: String): Option[LocalTime] = {
 

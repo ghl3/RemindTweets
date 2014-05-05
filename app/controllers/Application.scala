@@ -18,6 +18,7 @@ import models.Tweets.TweetHelpers
 
 object Application extends Controller {
 
+
   def index = Action {
       Ok(views.html.index("Your new application is ready."))
   }
@@ -37,7 +38,6 @@ object Application extends Controller {
         NotFound("User with id %s was not found".format(userId))
     }
   }
-
 
   /**
    * First, we check for an existing user of that name.
@@ -112,19 +112,5 @@ object Application extends Controller {
     ReminderIssuer.issueReminders
     Ok("SUP")
   }
-
-/*
-  def addTweet = Action {
-    val myVal = JsonMethods.parse(""" { "numbers" : [1, 2, 3, 4] } """)
-    val tweet: Tweet = Tweet(None, 999L, "MrDood", myVal, LocalDateTime.now())
-    val id: Long = Tweets.addToTable(tweet).id.get
-    Ok(views.html.index("Created Tweet: $id"))
-  }
-
-  def getTweet(id: Long) = Action {
-    val tweet = Tweets.fetch(id).get.getStatus
-    Ok(views.html.index("Created Tweet: %s".format(tweet.toString)))
-  }
-*/
 
 }
