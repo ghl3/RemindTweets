@@ -27,12 +27,12 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 
   override def receive: Receive = {
 
-    case Schedule(nRemindersMax) =>
+    case Schedule(min, max) =>
       play.api.db.slick.DB.withSession {
         implicit session =>
 
-          val minDateTime = DateTime.now().plusSeconds(30)
-          val maxDateTime = DateTime.now().plusSeconds(60)
+          val minDateTime = DateTime.now().plus(min.length)
+          val maxDateTime = DateTime.now().plus(max.length)
 
           val scheduledReminders = ScheduledReminders.getRemindersToSchedule(minDateTime, maxDateTime)
 
@@ -67,7 +67,7 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 }
 
 
-case class Schedule(nRemindersMax: Long)
+case class Schedule(minInterval: Duration, maxInterval: Duration)
 
 object ReminderScheduler {
 
@@ -78,11 +78,13 @@ object ReminderScheduler {
 
     val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="master")
 
-    // Create a new batch of reminders every 30 seconds
-    // for a maximum of 100
+    // Schedule a new batch to be run every 30 seconds
+    // The new batch is obtained from reminders scheduled for
+    // 30 seconds into the future until 60 seconds into the future
     Akka.system().scheduler.schedule(
       Duration.create(0, TimeUnit.MILLISECONDS),
       Duration.create(30, TimeUnit.SECONDS),
-        master, Schedule(1000))
+        master,
+      Schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS)))
   }
 }
