@@ -1,7 +1,7 @@
 package controllers
 
 import play.Logger
-import helpers.{ReminderIssuer, TwitterApi, Converters}
+import helpers.{TwitterHelpers, ReminderIssuer, TwitterApi, Converters}
 import scala.collection.JavaConverters._
 
 import play.api.mvc._
@@ -80,6 +80,9 @@ object Application extends Controller {
 
     for (mention <- mentions) {
 
+      TwitterHelpers.handleMention(mention)
+
+      /*
       val jsonString = Converters.getJsonStringFromStatus(mention)
       Logger.info("Got JSON String: {}", jsonString)
 
@@ -95,6 +98,7 @@ object Application extends Controller {
       val parsed = ReminderParsing.parseStatusText(mention.getText)
 
       Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
+      */
     }
 
     Logger.info("Putting into mentions")

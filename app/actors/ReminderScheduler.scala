@@ -6,7 +6,7 @@ import models.ScheduledReminders
 import play.Logger
 
 import play.libs.Akka
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{FiniteDuration, Duration}
 import java.util.concurrent.TimeUnit
 
 import play.api.Play.current
@@ -14,6 +14,30 @@ import org.joda.time.DateTime
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
+
+
+
+object ReminderScheduler {
+
+  def calculate(interval: FiniteDuration, nTweeters: Integer) {
+
+    // Create an Akka system
+    val system = ActorSystem("ReminderScheduler")
+
+    val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="master")
+
+    // Schedule a new batch to be run every 30 seconds
+    // The new batch is obtained from reminders scheduled for
+    // 30 seconds into the future until 60 seconds into the future
+    Akka.system().scheduler.schedule(
+      Duration.create(0, TimeUnit.MILLISECONDS),
+      interval,
+      master,
+      Schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS)))
+  }
+}
+
+case class Schedule(minInterval: Duration, maxInterval: Duration)
 
 /**
  * Manage the scheduling of reminders
@@ -70,25 +94,25 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 }
 
 
-case class Schedule(minInterval: Duration, maxInterval: Duration)
+case class TweetRequest(scheduledReminderId: Long, screenName: String, content: String)
 
+case class ReminderSuccess(scheduledReminderId: Long)
+case class ReminderFailure(scheduledReminderId: Long)
 
-object ReminderScheduler {
+class TweetSender extends Actor {
 
-  def calculate(nTweeters: Integer) {
+  override def receive = {
+    case TweetRequest(scheduledReminderId, screenName, content) =>
+      try {
 
-    // Create an Akka system
-    val system = ActorSystem("ReminderScheduler")
+        Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
 
-    val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="master")
-
-    // Schedule a new batch to be run every 30 seconds
-    // The new batch is obtained from reminders scheduled for
-    // 30 seconds into the future until 60 seconds into the future
-    Akka.system().scheduler.schedule(
-      Duration.create(0, TimeUnit.MILLISECONDS),
-      Duration.create(30, TimeUnit.SECONDS),
-        master,
-      Schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS)))
+        val status: String = "%s %s".format(screenName, content)
+        Logger.info("Sending tweet '{}'", status)
+        sender ! ReminderSuccess(scheduledReminderId)
+      } catch {
+        case e: Exception => sender ! ReminderFailure(scheduledReminderId)
+      }
+    case x => Logger.error("Unknown message received by TweetSender: %s" format x)
   }
 }

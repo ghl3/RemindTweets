@@ -3,6 +3,7 @@ package helpers
 import twitter4j._
 
 import twitter4j.conf.Configuration
+import play.Logger
 
 
 object TwitterApi {
