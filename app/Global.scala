@@ -1,17 +1,23 @@
-import play.{Logger, GlobalSettings}
+import actors.ReminderScheduler
+
+import play.api._
 
 
-class Global extends GlobalSettings {
+object Global extends GlobalSettings {
 
-  @Override
-  def onStart(app: App) {
+  override def onStart(app: Application) {
 
-    //lazy val database = Database.forDataSource(DB.getDataSource())
+    Logger.info("Starting app")
+
+    Logger.info("Starting listener actors")
+
+
+    Logger.info("Starting Reminder Scheduler actors")
+    ReminderScheduler.calculate(1)
 
   }
 
-  @Override
-  def onStop(app: App) {
+  override def onStop(app: Application) {
     Logger.info("Application shutdown...")
   }
 

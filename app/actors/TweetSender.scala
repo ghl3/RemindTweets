@@ -13,6 +13,9 @@ class TweetSender extends Actor {
   override def receive = {
     case TweetRequest(scheduledReminderId, screenName, content) =>
       try {
+
+        Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
+
         val status: String = "%s %s".format(screenName, content)
         Logger.info("Sending tweet '{}'", status)
         sender ! ReminderSuccess(scheduledReminderId)

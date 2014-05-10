@@ -71,7 +71,7 @@ object ScheduledReminders {
     scheduledReminders.where(_.id === id).firstOption
   }
 
-  def insert(scheduledReminder: ScheduledReminder)(implicit s: Session) {
+  def insert(scheduledReminder: ScheduledReminder)(implicit s: Session) = {
     scheduledReminders.insert(scheduledReminder)
   }
 
@@ -80,18 +80,18 @@ object ScheduledReminders {
     scheduledReminder.copy(id = Some(userId))
   }
 
-  def update(id: Long, scheduledReminder: ScheduledReminder)(implicit s: Session) {
+  def update(id: Long, scheduledReminder: ScheduledReminder)(implicit s: Session) = {
     val reminderToUpdate: ScheduledReminder = scheduledReminder.copy(Some(id))
     scheduledReminders.where(_.id === id).update(reminderToUpdate)
   }
 
-  def delete(id: Long)(implicit s: Session) {
+  def delete(id: Long)(implicit s: Session) = {
     scheduledReminders.where(_.id === id).delete
   }
 
-  def scheduleFirstReminder(reminder: Reminder)(implicit s: Session) {
+  def scheduleFirstReminder(reminder: Reminder)(implicit s: Session): ScheduledReminder = {
     val scheduledReminder = new ScheduledReminder(None, reminder.id.get, reminder.userId, reminder.firstTime)
-    scheduledReminders.insert(scheduledReminder)
+    insertAndGet(scheduledReminder)
   }
 
   def getRemindersToSchedule(minDateTime: DateTime, maxDateTime: DateTime)(implicit s: Session) = {

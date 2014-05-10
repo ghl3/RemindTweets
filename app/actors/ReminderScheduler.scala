@@ -31,10 +31,13 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
       play.api.db.slick.DB.withSession {
         implicit session =>
 
+          Logger.debug("Received Schedule {} {}", min, max)
           val minDateTime = DateTime.now().plus(min.length)
           val maxDateTime = DateTime.now().plus(max.length)
 
           val scheduledReminders = ScheduledReminders.getRemindersToSchedule(minDateTime, maxDateTime)
+
+          Logger.debug("Found %s scheduled reminders to handle now".format(scheduledReminders.size))
 
           for {scheduledReminder <- scheduledReminders
                reminder <- scheduledReminder.getReminder
@@ -68,6 +71,7 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 
 
 case class Schedule(minInterval: Duration, maxInterval: Duration)
+
 
 object ReminderScheduler {
 

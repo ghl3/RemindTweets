@@ -56,13 +56,26 @@ object Tweets {
     tweets.where(_.id === id).firstOption
   }
 
+  def findByTwitterId(twitterId: Long)(implicit s: Session): Option[Tweet] = {
+    tweets.where(_.twitterId === twitterId).firstOption
+  }
+
   def insert(tweet: Tweet)(implicit s: Session) {
     tweets.insert(tweet)
   }
 
   def insertAndGet(tweet: Tweet)(implicit s: Session): Tweet = {
     val userId = (tweets returning tweets.map(_.id)) += tweet
-    return tweet.copy(id = Some(userId))
+    tweet.copy(id = Some(userId))
+  }
+
+  def insertIfUniqueTweetAndGet(tweet: Tweet)(implicit s: Session): Tweet = {
+    val existingTweet = Tweets.findByTwitterId(tweet.twitterId)
+    if (existingTweet.isDefined) {
+      existingTweet.get
+    } else {
+      Tweets.insertAndGet(tweet)
+    }
   }
 
   def update(id: Long, tweet: Tweet)(implicit s: Session) {
@@ -83,7 +96,7 @@ object Tweets {
       Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
       val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
 
-      return Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
+      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
   }
 

@@ -26,7 +26,7 @@ import java.lang.reflect.InvocationTargetException
  * @param what The text to be sent to the user at the remind time
  * @param tweetId The id of the tweet that initiated the reminder
  */
-case class Reminder(id: Option[Long], userId: Long, createdAt: DateTime,
+case class Reminder(id: Option[Long], userId: Long, twitterId: Long, createdAt: DateTime,
                     repeat: Frequency, firstTime: DateTime,
                     what: String, tweetId: Long) {
 
@@ -50,13 +50,14 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def userId = column[Long]("user_id", O.NotNull)
+  def twitterId = column[Long]("twitter_id", O.NotNull)
   def createdAt = column[DateTime]("createdat")
   def repeat = column[Frequency]("repeat")
   def firstTime = column[DateTime]("firsttime")
   def what = column[String]("what")
   def tweetId = column[Long]("tweet_id")
 
-  def * = (id.?,  userId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
+  def * = (id.?,  userId, twitterId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
 }
 
@@ -66,6 +67,10 @@ object Reminders {
 
   def findById(id: Long)(implicit s: Session): Option[Reminder] = {
     reminders.where(_.id === id).firstOption
+  }
+
+  def findByTwitterId(twitterId: Long) (implicit s: Session): Option[Reminder] = {
+    reminders.where(_.twitterId === twitterId).firstOption
   }
 
   def insert(reminder: Reminder)(implicit s: Session) {
@@ -86,29 +91,70 @@ object Reminders {
     reminders.where(_.id === id).delete
   }
 
-  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session) = {
+  def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session): Option[Reminder] = {
     parsed match {
       case ReminderParsing.Success(what, time, repeat) =>
-        val savedTweet = Tweets.insertAndGet(tweet)
-        val reminder = Reminders.createFromTweet(user, savedTweet, ReminderParsing.Success(what, time, repeat))
-        val savedReminder = Reminders.insertAndGet(reminder)
-        ScheduledReminders.scheduleFirstReminder(savedReminder)
+
         Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
+        // First, we check if we've already created a reminder for this tweet.
+        // We don't want to double count
+
+        /*
+        val existingTweet = Tweets.findByTwitterId(tweet.twitterId)
+
+        if (existingTweet.isDefined) {
+          Logger.debug("Already found tweet in database. Not resaving")
+          return None
+        }
+        val savedTweet = Tweets.insertAndGet(tweet)
+        */
+        val savedTweet  = Tweets.insertIfUniqueTweetAndGet(tweet)
+        val createdReminder = Reminders.createFromTweetIfUnique(user, savedTweet, ReminderParsing.Success(what, time, repeat))
+        createdReminder match {
+          case Some(reminder) =>
+            Logger.info("Saving reminder into database and scheduling first reminder")
+            val savedReminder = Reminders.insertAndGet(reminder)
+            ScheduledReminders.scheduleFirstReminder(savedReminder)
+            Some(reminder)
+          case None =>
+            Logger.info("Reminder already exists.  Not re-saving")
+            None
+        }
       case _ =>
         Logger.info("Did not find reminder in tweet")
+        None
     }
   }
 
-  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status]) (implicit s: Session) = {
-    for (status <- statuses) {
+  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status])(implicit s: Session): Iterable[Reminder] = {
+    (for (status <- statuses) yield {
       val tweet = TweetHelpers.fromStatus(user, status)
       val parsed =  ReminderParsing.parseStatusText(status.getText)
       createAndSaveIfReminder(user, tweet, parsed)
+    }).flatten
+  }
+
+  /**
+   * Create a new reminder for the given user from the
+   * given tweet and the parsed result of the tweet.
+   * If the tweet has already been used to create a reminder
+   * that exist in the db, return None
+   * @param user
+   * @param tweet
+   * @param parsed
+   * @return
+   */
+  def createFromTweetIfUnique(user: User, tweet: Tweet, parsed: ReminderParsing.Success)(implicit s: Session): Option[Reminder] = {
+    val existingReminder = findByTwitterId(tweet.twitterId)
+    if (existingReminder.isDefined) {
+      None
+    } else {
+      Some(createFromTweet(user, tweet, parsed)) //Reminder(None, user.id.get, tweet.twitterId, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)_
     }
   }
 
   def createFromTweet(user: User, tweet: Tweet, parsed: ReminderParsing.Success) =  {
-    Reminder(None, user.id.get, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
+    Reminder(None, user.id.get, tweet.twitterId, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
   }
 
   /**
@@ -135,7 +181,7 @@ object Reminders {
 
     parsed match {
       case ReminderParsing.Success(what, firstTime, repeat) =>
-        Some(Reminder(None, tweet.userId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
+        Some(Reminder(None, tweet.userId, tweet.twitterId, DateTime.now(), repeat, firstTime, what, tweet.id.get))
       case _ => None
     }
   }

@@ -61,8 +61,11 @@ object Application extends Controller {
       // Now that we've got the user, let's get his tweets
       val timeline: Iterable[twitter4j.Status] = TwitterApi.getUserTimeline(screenName).asScala
 
-      Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
-      Ok("SUP")
+      val reminders = Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
+
+     // implicit val reminderReads = Json.reads[Reminder]
+
+      Ok(Json.toJson(reminders.map(_.what)))
 
     }
   }
