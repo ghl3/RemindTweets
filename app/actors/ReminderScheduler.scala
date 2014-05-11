@@ -6,20 +6,19 @@ import models.ScheduledReminders
 import play.Logger
 
 import play.libs.Akka
-import scala.concurrent.duration.{FiniteDuration, Duration}
+import scala.concurrent
 import java.util.concurrent.TimeUnit
 
 import play.api.Play.current
-import org.joda.time.DateTime
+import org.joda.time
 
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
 
-
 object ReminderScheduler {
 
-  def calculate(interval: FiniteDuration, nTweeters: Integer) {
+  def calculate(interval: concurrent.duration.FiniteDuration, nTweeters: Integer) {
 
     // Create an Akka system
     val system = ActorSystem("ReminderScheduler")
@@ -30,14 +29,14 @@ object ReminderScheduler {
     // The new batch is obtained from reminders scheduled for
     // 30 seconds into the future until 60 seconds into the future
     Akka.system().scheduler.schedule(
-      Duration.create(0, TimeUnit.MILLISECONDS),
+      concurrent.duration.Duration.create(0, TimeUnit.MILLISECONDS),
       interval,
       master,
-      Schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(60, TimeUnit.SECONDS)))
+      Schedule(time.Duration.standardSeconds(30), time.Duration.standardSeconds(60)))
   }
 }
 
-case class Schedule(minInterval: Duration, maxInterval: Duration)
+case class Schedule(minInterval: time.Duration, maxInterval: time.Duration)
 case class ReminderSuccess(scheduledReminderId: Long)
 case class ReminderFailure(scheduledReminderId: Long)
 
@@ -57,9 +56,9 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
       play.api.db.slick.DB.withSession {
         implicit session =>
 
-          Logger.debug("Received Schedule {} {}", min, max)
-          val minDateTime = DateTime.now().plus(min.length)
-          val maxDateTime = DateTime.now().plus(max.length)
+          val minDateTime = time.DateTime.now().plus(min)
+          val maxDateTime = time.DateTime.now().plus(max)
+          Logger.debug("Received Schedule {} {}", minDateTime, maxDateTime)
 
           val scheduledReminders = ScheduledReminders.getRemindersToSchedule(minDateTime, maxDateTime)
 
@@ -68,7 +67,14 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
           for {scheduledReminder <- scheduledReminders
                reminder <- scheduledReminder.getReminder
                user <- reminder.getUser} {
-            workerRouter ! TweetRequest(scheduledReminder.id.get, user.screenName, reminder.what)
+
+            val duration = new time.Duration(time.DateTime.now(), scheduledReminder.time)
+            val concurrentDuration = concurrent.duration.Duration.create(duration.getMillis, TimeUnit.MILLISECONDS)
+
+            Logger.info("Sending message to {} at {} ({})", user.screenName, scheduledReminder.time, duration.toString)
+            context.system.scheduler.scheduleOnce(concurrentDuration) {
+              workerRouter ! TweetRequest(scheduledReminder.id.get, user.screenName, reminder.what)
+            }
           }
       }
 

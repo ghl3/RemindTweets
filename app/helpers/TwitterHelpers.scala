@@ -2,7 +2,7 @@ package helpers
 
 import play.Logger
 
-import models.{Reminders, ReminderParsing, Users}
+import models.{Reminders, Users}
 import models.Tweets.TweetHelpers
 import twitter4j.Status
 import play.api.db.slick.Session
