@@ -1,0 +1,18 @@
+@(reminders: List[ScheduledReminder])
+
+@import models._
+
+@main("Todo list") {
+
+<h1> There are @reminders.size task(s)</h1>
+
+<ul>
+    @reminders.map { reminder =>
+    <li>
+        @reminder.time
+    </li>
+    }
+</ul>
+
+
+}
