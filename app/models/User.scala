@@ -5,7 +5,7 @@ import app.MyPostgresDriver.simple._
 
 import helpers.TwitterApi
 
-// TODO: Add twitterid
+
 case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
 
 
@@ -16,7 +16,6 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
   def getScheduledReminders(id: Long)(implicit s: Session): List[ScheduledReminder] = {
     ScheduledReminders.scheduledReminders.where(_.userId === id).list
   }
-
 }
 
 
@@ -45,7 +44,7 @@ object Users {
 
   def insertAndGet(user: User)(implicit s: Session): User = {
     val userId = (users returning users.map(_.id)) += user
-    return user.copy(id = Some(userId))
+    user.copy(id = Some(userId))
   }
 
   def update(id: Long, user: User)(implicit s: Session) {
@@ -74,25 +73,15 @@ object Users {
     }
   }
 
-  /**
-   * Create a user from a twitter4j User object
-   * @param user
-   * @return
-   */
   def createUser(user: TwitterApi.User)(implicit s: Session): User = {
     insertAndGet(new User(None, user.getScreenName, LocalDateTime.now()))
   }
-
 
   def getOrCreateUser(screenName: String)(implicit s: Session): Option[User] = {
     findByScreenName(screenName) match {
       case Some(user) => Some(user)
       case None => createWithScreenName(screenName)
     }
-
   }
-
-
-
 }
 

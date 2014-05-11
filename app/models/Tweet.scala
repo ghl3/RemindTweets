@@ -87,12 +87,7 @@ object Tweets {
     tweets.where(_.id === id).delete
   }
 
-
-  object TweetHelpers {
-
-    def fromStatusAndJson(user: User, status: Status, json: JsValue): Tweet = {
-      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
-    }
+  def fromStatusAndJson(user: User, status: Status, json: JsValue): Tweet = {
+    Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
   }
-
 }

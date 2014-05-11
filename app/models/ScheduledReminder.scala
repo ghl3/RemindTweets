@@ -71,8 +71,8 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
 
 
 object ScheduledReminders {
-  val scheduledReminders = TableQuery[ScheduledReminders]
 
+  val scheduledReminders = TableQuery[ScheduledReminders]
 
   def findById(id: Long)(implicit s: Session): Option[ScheduledReminder] = {
     scheduledReminders.where(_.id === id).firstOption

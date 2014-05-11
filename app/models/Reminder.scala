@@ -6,7 +6,6 @@ import org.joda.time._
 import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
-import models.Tweets.TweetHelpers
 
 import scala.Some
 import models.Repeat.Frequency
@@ -125,7 +124,7 @@ object Reminders {
 
   def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[TwitterStatusAndJson])(implicit s: Session): Iterable[Reminder] = {
     (for (status <- statuses) yield {
-      val tweet = TweetHelpers.fromStatusAndJson(user, status.status, status.json)
+      val tweet = Tweets.fromStatusAndJson(user, status.status, status.json)
       val parsed =  ReminderParsing.parseStatusText(status.status.getText)
       createAndSaveIfReminder(user, tweet, parsed)
     }).flatten
@@ -194,10 +193,6 @@ object Reminders {
       case _ => None
     }
   }
-}
-
-
-object ReminderHelper {
 
   def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
     tweets.map(tweet => ReminderParsing.parseStatusText(tweet.getStatus.getText)).filter {

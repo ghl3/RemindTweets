@@ -4,7 +4,7 @@ import akka.actor._
 import akka.routing.RoundRobinRouter
 import play.Logger
 import org.joda.time.DateTime
-import helpers.{TwitterApi, TwitterHelpers}
+import helpers.{ReminderParsing, TwitterApi}
 
 import TwitterApi.{Paging, Status}
 
@@ -18,8 +18,9 @@ import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
 import play.api.libs.json.JsValue
-import models.Reminders
+import models.{Tweets, Users, Reminders}
 import helpers.TwitterApi.TwitterStatusAndJson
+import play.api.db.slick.Session
 
 
 object ReminderListener {
@@ -89,7 +90,25 @@ class ReminderParser extends Actor {
 
       play.api.db.slick.DB.withSession {
         implicit session =>
-          TwitterHelpers.handleMention(mention, json)
+          ReminderParser.handleMention(mention, json)
       }
+  }
+}
+
+
+object ReminderParser {
+
+  def handleMention(mention: Status, json: JsValue)(implicit s: Session) = {
+
+    // Check if it's an existing user
+    val user = Users.getOrCreateUser(mention.getUser.getScreenName)
+
+    Logger.info("Handling mention: {} for user {}", mention, user)
+
+    val tweet = Tweets.fromStatusAndJson(user.get, mention, json)
+    val parsed = ReminderParsing.parseStatusText(mention.getText)
+
+    Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
+
   }
 }

@@ -14,9 +14,11 @@ object ReminderParsing {
   sealed abstract class Parsed {
     def isParsedSuccessfully = false
   }
+
   case class Success(what: String, firstTime: DateTime, repeat: Frequency) extends Parsed {
     override def isParsedSuccessfully = true
   }
+
   case object Failure extends Parsed
   case object DateTooEarly extends Parsed
   case object InvalidDate extends Parsed
@@ -59,7 +61,6 @@ object ReminderParsing {
    * @return
    */
   def parseStatusText(text: String): ReminderParsing.Parsed = {
-
 
     Logger.info("Checking text: {}", text)
 
@@ -115,6 +116,7 @@ object ReminderParsing {
     }
   }
 
+
   /**
    * Takes a string and returns the
    * @param timeString
@@ -133,9 +135,9 @@ object ReminderParsing {
       return Some(DateTime.now().withTime(twelveHour.get.getHourOfDay, twelveHour.get.getMinuteOfHour,
         twelveHour.get.getSecondOfMinute,twelveHour.get.getMillisOfSecond))
     }
-
     None
   }
+
 
   def parseReminderTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
     if (time.isDefined && when.isDefined) {
@@ -184,6 +186,7 @@ object ReminderParsing {
       case _ => LocalDate.now()
     }
   }
+
 
   def getNextDayOfWeek(dayOfWeek: Int) = {
     val d: LocalDate = LocalDate.now().withDayOfWeek(dayOfWeek)
