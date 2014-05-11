@@ -35,3 +35,6 @@ GET /checkForReminders/:screenName              controllers.Application.checkFor
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
+
+
+GET /testReminder                   controllers.Application.testReminder

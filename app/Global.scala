@@ -15,14 +15,14 @@ object Global extends GlobalSettings {
 
     Logger.info("Starting app")
 
-    if (Play.configuration.getBoolean("listenerScheduler.run").getOrElse(true)) {
+    if (Play.configuration.getBoolean("listenerScheduler.run").getOrElse(false)) {
       Logger.info("Starting listener actors")
       val durationInSeconds = Play.configuration.getInt("reminderListener.intervalInSeconds").getOrElse(240)
       ReminderListener.calculate(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)
     }
 
 
-    if (Play.configuration.getBoolean("reminderScheduler.run").getOrElse(true)) {
+    if (Play.configuration.getBoolean("reminderScheduler.run").getOrElse(false)) {
       Logger.info("Starting Reminder Scheduler actors")
       val durationInSeconds = Play.configuration.getInt("reminderScheduler.intervalInSeconds").getOrElse(240)
       ReminderScheduler.calculate(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)

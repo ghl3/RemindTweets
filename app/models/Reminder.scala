@@ -65,7 +65,6 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def tweet = foreignKey("REMINDER_TWEET_FK", tweetId, Tweets.tweets)(_.id)
 
-
 }
 
 

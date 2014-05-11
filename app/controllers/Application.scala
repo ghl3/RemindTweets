@@ -4,6 +4,8 @@ import play.Logger
 import helpers.{TwitterHelpers, TwitterApi, Converters}
 import scala.collection.JavaConverters._
 
+import app.MyPostgresDriver.simple._
+
 import play.api.mvc._
 import models._
 import org.joda.time.DateTime
@@ -89,6 +91,19 @@ object Application extends Controller {
 
     Logger.info("Status: {}", status)
     Ok(views.html.index("Fish"))
+  }
+
+
+  def testReminder = DBAction { implicit rs =>
+
+    val remindersAndUsers = for {
+      r <- Reminders.reminders
+      u <- r.user
+    } yield (r.id, u.id)
+
+    remindersAndUsers.list.foreach{case(r, u) => Logger.info("Sum: %s".format(r+u))}
+
+    Ok("SUP")
   }
 
 }
