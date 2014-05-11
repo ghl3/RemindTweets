@@ -13,7 +13,7 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
     Reminders.reminders.where(_.userId === id).list
   }
 
-  def getScheduledReminders(id: Long)(implicit s: Session): List[ScheduledReminder] = {
+  def getScheduledReminders()(implicit s: Session): List[ScheduledReminder] = {
     ScheduledReminders.scheduledReminders.where(_.userId === id).list
   }
 }
