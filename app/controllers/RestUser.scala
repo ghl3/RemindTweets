@@ -29,7 +29,7 @@ object RestUser extends Controller {
 
   def userTimeline(screenName: String) = DBAction { implicit rs =>
 
-    val timeline = TwitterApi.getUserTimeline(screenName).asScala
+    val timeline = TwitterApi.getUserTimeline(screenName)
 
     val format = new java.text.SimpleDateFormat("dd-MM-yyyy")
 

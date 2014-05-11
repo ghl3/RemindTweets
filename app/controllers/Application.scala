@@ -60,7 +60,7 @@ object Application extends Controller {
     }
     else {
       // Now that we've got the user, let's get his tweets
-      val timeline: Iterable[twitter4j.Status] = TwitterApi.getUserTimeline(screenName).asScala
+      val timeline = TwitterApi.getUserTimelineAndJson(screenName)
 
       val reminders = Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
 
@@ -72,17 +72,19 @@ object Application extends Controller {
 
   def mentions = DBAction { implicit rs =>
 
-    Logger.info("Getting status for {} {}", TwitterApi.getTwitter.getScreenName, TwitterApi.getTwitter.getId: java.lang.Long)
+    Logger.info("Getting status for {} {}", TwitterApi.getScreenName, TwitterApi.getId: java.lang.Long)
 
-    val mentions = TwitterApi.getMentionsTimeline.asScala.iterator
+    val mentions = TwitterApi.getMentionsTimeline
     Logger.info("Mentions: %s".format(mentions))
 
+    /*
     for (mention <- mentions) {
       TwitterHelpers.handleMentionThreadLocal(mention)
     }
+    */
 
     Logger.info("Putting into mentions")
-    Ok(views.html.mentions(mentions))
+    Ok(views.html.mentions(mentions.iterator))
   }
 
 

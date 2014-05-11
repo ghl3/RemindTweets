@@ -91,26 +91,40 @@ object Tweets {
 
   object TweetHelpers {
 
-    @Deprecated
-    def fromStatus(user: User, status: twitter4j.Status): Tweet = {
+    /*
+    def fromStatusAndJson(user: User, status: twitter4j.Status, json: JsValue): Tweet = {
 
       Logger.info("Getting JSON string from status")
-      val statusJson: String = Converters.getJsonStringFromStatus(status)
-      Logger.info("Got JSON string from status: {}", statusJson)
+      Logger.info("Got JSON string from status: {}", json)
 
-      Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
-      val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
+      Logger.info("Creating Tweet from status: {} json: {}", status, json)
 
       Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
+    */
 
+    /*
+    @Deprecated
+    def fromStatus(user: User, status: twitter4j.Status): Tweet = {
+
+      //Logger.info("Getting JSON string from status")
+      //val statusJson: String = Converters.getJsonStringFromStatus(status)
+      //Logger.info("Got JSON string from status: {}", statusJson)
+
+      //Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
+      //val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
+
+      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
+    }
+*/
     def fromStatusAndJson(user: User, status: twitter4j.Status, json: JsValue): Tweet = {
       Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
   }
-
+/*
   def getUserTweetsFromTimeline(user: User, timeline: Iterable[twitter4j.Status]) : Iterable[Tweet] = {
     for (status <- timeline) yield TweetHelpers.fromStatus(user, status)
   }
+  */
 
 }

@@ -25,6 +25,7 @@ object TwitterHelpers {
 
   }
 
+  /*
   @Deprecated
   def handleMentionThreadLocal(mention: Status)(implicit s: Session) = {
 
@@ -39,4 +40,5 @@ object TwitterHelpers {
     Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
 
   }
+  */
 }

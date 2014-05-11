@@ -4,7 +4,7 @@ import akka.actor._
 import akka.routing.RoundRobinRouter
 import play.Logger
 import org.joda.time.DateTime
-import helpers.{Converters, TwitterApi, TwitterHelpers}
+import helpers.{TwitterApi, TwitterHelpers}
 
 import twitter4j.{Paging, Status}
 
@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
-import scala.collection.JavaConverters._
 import play.api.libs.json.JsValue
 import models.Reminders
+import helpers.TwitterApi.TwitterStatusAndJson
 
 
 object ReminderListener {
@@ -66,12 +66,12 @@ class ReminderListener(nListeners: Integer) extends Actor {
         paging.setSinceId(maxMentionId.get)
       }
 
-      val mentions = TwitterApi.getMentionsTimeline(paging).asScala.iterator
+      val mentions = TwitterApi.getMentionsAndJsonTimeline(paging)
 
-      for (mention: twitter4j.Status <- mentions) {
-        Logger.info("Sending mention %s to actors".format(mention.getId))
-        val json = Converters.getJsonFromStatus(mention)
-        reminderParserRouter ! ParseAndHandleMention(mention, json)
+      for (mention: TwitterStatusAndJson <- mentions) {
+        Logger.info("Sending mention %s to actors".format(mention.status.getId))
+        //val json = Converters.getJsonFromStatus(mention)
+        reminderParserRouter ! ParseAndHandleMention(mention.status, mention.json) //, json)
       }
   }
 }

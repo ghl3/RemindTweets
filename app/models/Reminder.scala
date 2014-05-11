@@ -11,6 +11,7 @@ import models.Tweets.TweetHelpers
 import scala.Some
 import models.Repeat.Frequency
 import helpers.ReminderParsing
+import helpers.TwitterApi.TwitterStatusAndJson
 
 
 /**
@@ -120,10 +121,10 @@ object Reminders {
     }
   }
 
-  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[twitter4j.Status])(implicit s: Session): Iterable[Reminder] = {
+  def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[TwitterStatusAndJson])(implicit s: Session): Iterable[Reminder] = {
     (for (status <- statuses) yield {
-      val tweet = TweetHelpers.fromStatus(user, status)
-      val parsed =  ReminderParsing.parseStatusText(status.getText)
+      val tweet = TweetHelpers.fromStatusAndJson(user, status.status, status.json)
+      val parsed =  ReminderParsing.parseStatusText(status.status.getText)
       createAndSaveIfReminder(user, tweet, parsed)
     }).flatten
   }

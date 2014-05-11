@@ -23,15 +23,6 @@ object Converters {
     }
   }
 
-  // Easy wrappers for JSON conversion
-
-  def getJsonStringFromStatus(status: twitter4j.Status): String = {
-    twitter4j.json.DataObjectFactory.getRawJSON(status)
-  }
-
-  def getJsonFromStatus(status: twitter4j.Status): JsValue = {
-    getJsonFromString(twitter4j.json.DataObjectFactory.getRawJSON(status))
-  }
 
   def getJsonStringFromJson(json: JsValue): String = {
     play.api.libs.json.Json.stringify(json)

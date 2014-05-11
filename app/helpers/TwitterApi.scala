@@ -3,104 +3,156 @@ package helpers
 import twitter4j._
 
 import twitter4j.conf.Configuration
-import play.Logger
+import play.api.libs.json.JsValue
+
+import scala.collection.JavaConverters._
 
 
 object TwitterApi {
 
 
-  def getConfigVariableFromEnv: Map[String,String] = {
-    Map("consumerKey" -> System.getenv("twitter4j_oauth_consumerKey"),
-      "consumerSecret" -> System.getenv("twitter4j_oauth_consumerSecret"),
-      "accessToken" -> System.getenv("twitter4j_oauth_accessToken"),
-      "accessTokenSecret" -> System.getenv("twitter4j_oauth_accessTokenSecret"))
-  }
-
-  def getConfig: Configuration = {
-
-    val vars = getConfigVariableFromEnv
-
-    new twitter4j.conf.ConfigurationBuilder()
-      .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
-      .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
-      .setOAuthAccessToken(vars.getOrElse("accessToken", null))
-      .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
-      .setJSONStoreEnabled(true)
-      .setDebugEnabled(true)
-      .setUseSSL(true)
-      .build()
-  }
-
-
-  def getTwitter: Twitter = {
-    val tf = new TwitterFactory(getConfig)
-    tf.getInstance()
-  }
-
-
-  def updateStatus(text: String) {
-    getTwitter.updateStatus(text)
-  }
-
-
-  def getTwitterStream = {
-    new TwitterStreamFactory(getConfig).getInstance()
-  }
-
-
-  def startListener() = {
-    val twitterStream = getTwitterStream
-
-    twitterStream.addListener(new TweetListener((status: Status) => {
-      print(status.getText)
-    }))
-
-    // sample() method internally creates a thread
-    // which manipulates TwitterStream
-    // and calls these adequate listener methods continuously.
-    twitterStream.sample()
-  }
-
   val MAX_TIMELINE_TWEETS = 800
 
+  case class TwitterStatusAndJson(status: twitter4j.Status, json: JsValue) {
+    def this(status: twitter4j.Status) {
+      this(status, TwitterApiInternal.getJsonFromStatus(status))
+    }
+  }
+
+  def getScreenName = TwitterApiInternal.getTwitter.getScreenName
+
+  def getId = TwitterApiInternal.getTwitter.getId
+
+  //def getMentionsTimeline = TwitterApiInternal.getTwitter.getMentionsTimeline
+
+
   def getMentionsTimeline = {
-    getTwitter.getMentionsTimeline
+    for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline.asScala.view) yield mention
+  }
+
+  def getMentionsAndJsonTimeline = {
+    for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline.asScala.view) yield new TwitterStatusAndJson(mention)
   }
 
   def getMentionsTimeline(paging: Paging) = {
-    getTwitter.getMentionsTimeline(paging)
+    for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline(paging).asScala.view) yield mention
   }
+
+  def getMentionsAndJsonTimeline(paging: Paging) = {
+    for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline(paging).asScala.view) yield new TwitterStatusAndJson(mention)
+  }
+
 
   def getHomeTimeline = {
-   getTwitter.getHomeTimeline
+    for (mention <- TwitterApiInternal.getTwitter.getHomeTimeline.asScala.view) yield mention
   }
 
+  def getHomeTimelineAndJson = {
+    for (mention <- TwitterApiInternal.getTwitter.getHomeTimeline.asScala.view) yield new TwitterStatusAndJson(mention)
+  }
 
   def getUserTimeline(screenName: String) = {
-    getTwitter.getUserTimeline(screenName)
+    for (mention <- TwitterApiInternal.getTwitter.getUserTimeline(screenName).asScala.view) yield mention
+  }
+
+  def getUserTimelineAndJson(screenName: String) = {
+    for (mention <- TwitterApiInternal.getTwitter.getUserTimeline(screenName).asScala.view) yield new TwitterStatusAndJson(mention)
   }
 
 
-  class TweetListener(val statusAction: (Status)=>Unit) extends StatusListener {
+  /**
+   * We encapsulate the actual twitter api
+   * for a number of reasons (testing,
+   * controlling thread safety, etc)
+   */
+  private object TwitterApiInternal {
 
-    def onStatus(status: Status) {
-      statusAction(status)
+    def getConfigVariableFromEnv: Map[String, String] = {
+      Map("consumerKey" -> System.getenv("twitter4j_oauth_consumerKey"),
+        "consumerSecret" -> System.getenv("twitter4j_oauth_consumerSecret"),
+        "accessToken" -> System.getenv("twitter4j_oauth_accessToken"),
+        "accessTokenSecret" -> System.getenv("twitter4j_oauth_accessTokenSecret"))
     }
 
-    def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) {}
+    def getConfig: Configuration = {
 
-    def onTrackLimitationNotice(numberOfLimitedStatuses: Integer) {}
+      val vars = getConfigVariableFromEnv
 
-    def onException(ex: Exception) {
-      ex.printStackTrace()
+      new twitter4j.conf.ConfigurationBuilder()
+        .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
+        .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
+        .setOAuthAccessToken(vars.getOrElse("accessToken", null))
+        .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
+        .setJSONStoreEnabled(true)
+        .setDebugEnabled(true)
+        .setUseSSL(true)
+        .build()
     }
 
-    def onTrackLimitationNotice(p1: Int) {}
 
-    def onStallWarning(p1: StallWarning) {}
 
-    def onScrubGeo(p1: Long, p2: Long) {}
+    // Easy wrappers for JSON conversion
+
+    def getJsonStringFromStatus(status: twitter4j.Status): String = {
+      twitter4j.json.DataObjectFactory.getRawJSON(status)
+    }
+
+    def getJsonFromStatus(status: twitter4j.Status): JsValue = {
+      Converters.getJsonFromString(twitter4j.json.DataObjectFactory.getRawJSON(status))
+    }
+
+
+    def getTwitter: Twitter = {
+      val tf = new TwitterFactory(getConfig)
+      tf.getInstance()
+    }
+
+
+    def updateStatus(text: String) {
+      getTwitter.updateStatus(text)
+    }
+
+
+    def getTwitterStream = {
+      new TwitterStreamFactory(getConfig).getInstance()
+    }
+
+
+    def startListener() = {
+      val twitterStream = getTwitterStream
+
+      twitterStream.addListener(new TweetListener((status: Status) => {
+        print(status.getText)
+      }))
+
+      // sample() method internally creates a thread
+      // which manipulates TwitterStream
+      // and calls these adequate listener methods continuously.
+      twitterStream.sample()
+    }
+
+
+
+    class TweetListener(val statusAction: (Status) => Unit) extends StatusListener {
+
+      def onStatus(status: Status) {
+        statusAction(status)
+      }
+
+      def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) {}
+
+      def onTrackLimitationNotice(numberOfLimitedStatuses: Integer) {}
+
+      def onException(ex: Exception) {
+        ex.printStackTrace()
+      }
+
+      def onTrackLimitationNotice(p1: Int) {}
+
+      def onStallWarning(p1: StallWarning) {}
+
+      def onScrubGeo(p1: Long, p2: Long) {}
+    }
+
   }
-
-
 }
