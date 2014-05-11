@@ -147,6 +147,18 @@ object Reminders {
     }
   }
 
+
+  def getLatestReminderTwitterId()(implicit s: Session): Option[Long] = {
+
+    val reminderTwitterIds = for {
+      r <- Reminders.reminders
+      t <- r.tweet
+    } yield t.twitterId
+
+    reminderTwitterIds.sortBy(_.desc).firstOption
+  }
+
+
   def createFromTweet(user: User, tweet: Tweet, parsed: ReminderParsing.Success) =  {
     Reminder(None, user.id.get, tweet.twitterId, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)
   }

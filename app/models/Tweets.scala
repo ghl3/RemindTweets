@@ -10,11 +10,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 
 
-// SEE: https://github.com/ThomasAlexandre/slickcrudsample/
-// http://java.dzone.com/articles/getting-started-play-21-scala
 
-// TODO: Convert to DateTime
-// TODO: Remove the JValue as a member.  Should only take a Status, store that, and convet it to JValue for database persistence
 case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: String, content: JsValue, fetchedAt: DateTime) {
 
   // We internally store a twitter4j object

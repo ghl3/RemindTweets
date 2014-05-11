@@ -74,7 +74,7 @@ object Application extends Controller {
 
     Logger.info("Getting status for {} {}", TwitterApi.getTwitter.getScreenName, TwitterApi.getTwitter.getId: java.lang.Long)
 
-    val mentions = TwitterApi.getMentions.asScala.iterator
+    val mentions = TwitterApi.getMentionsTimeline.asScala.iterator
     Logger.info("Mentions: %s".format(mentions))
 
     for (mention <- mentions) {

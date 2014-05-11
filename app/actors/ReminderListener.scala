@@ -6,7 +6,7 @@ import play.Logger
 import org.joda.time.DateTime
 import helpers.{Converters, TwitterApi, TwitterHelpers}
 
-import twitter4j.Status
+import twitter4j.{Paging, Status}
 
 import play.api.Play.current
 import scala.concurrent.duration.Duration
@@ -19,6 +19,7 @@ import ExecutionContext.Implicits.global
 
 import scala.collection.JavaConverters._
 import play.api.libs.json.JsValue
+import models.Reminders
 
 
 object ReminderListener {
@@ -54,11 +55,21 @@ class ReminderListener(nListeners: Integer) extends Actor {
 
     case GetMentions(initialTime) =>
 
-      Logger.info("Getting Mentions...")
+      val maxMentionId: Option[Long] = play.api.db.slick.DB.withSession { implicit session =>
+          Reminders.getLatestReminderTwitterId()
+      }
 
-      val mentions = TwitterApi.getMentions.asScala.iterator
-      Logger.info("Mentions: %s".format(mentions.map(_.toString)))
+      val paging: Paging = new Paging()
+      paging.setCount(TwitterApi.MAX_TIMELINE_TWEETS)
+      if (maxMentionId.isDefined) {
+        Logger.info("Getting mentions since twitter id: %s".format(maxMentionId.get))
+        paging.setSinceId(maxMentionId.get)
+      }
+
+      val mentions = TwitterApi.getMentionsTimeline(paging).asScala.iterator
+
       for (mention: twitter4j.Status <- mentions) {
+        Logger.info("Sending mention %s to actors".format(mention.getId))
         val json = Converters.getJsonFromStatus(mention)
         reminderParserRouter ! ParseAndHandleMention(mention, json)
       }

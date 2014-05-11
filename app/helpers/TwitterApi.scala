@@ -61,8 +61,14 @@ object TwitterApi {
     twitterStream.sample()
   }
 
-  def getMentions = {
+  val MAX_TIMELINE_TWEETS = 800
+
+  def getMentionsTimeline = {
     getTwitter.getMentionsTimeline
+  }
+
+  def getMentionsTimeline(paging: Paging) = {
+    getTwitter.getMentionsTimeline(paging)
   }
 
   def getHomeTimeline = {
