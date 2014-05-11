@@ -38,6 +38,8 @@ object ReminderScheduler {
 }
 
 case class Schedule(minInterval: Duration, maxInterval: Duration)
+case class ReminderSuccess(scheduledReminderId: Long)
+case class ReminderFailure(scheduledReminderId: Long)
 
 /**
  * Manage the scheduling of reminders
@@ -96,9 +98,6 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 
 case class TweetRequest(scheduledReminderId: Long, screenName: String, content: String)
 
-case class ReminderSuccess(scheduledReminderId: Long)
-case class ReminderFailure(scheduledReminderId: Long)
-
 class TweetSender extends Actor {
 
   override def receive = {
@@ -113,6 +112,5 @@ class TweetSender extends Actor {
       } catch {
         case e: Exception => sender ! ReminderFailure(scheduledReminderId)
       }
-    case x => Logger.error("Unknown message received by TweetSender: %s" format x)
   }
 }

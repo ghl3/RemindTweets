@@ -1,7 +1,7 @@
 package controllers
 
 import play.Logger
-import helpers.{TwitterHelpers, ReminderIssuer, TwitterApi, Converters}
+import helpers.{TwitterHelpers, TwitterApi, Converters}
 import scala.collection.JavaConverters._
 
 import play.api.mvc._
@@ -13,7 +13,6 @@ import play.api.db.slick._
 import play.api.libs.json.Json
 import models.Tweet
 import scala.Some
-import models.Tweets.TweetHelpers
 
 
 object Application extends Controller {
@@ -63,8 +62,6 @@ object Application extends Controller {
 
       val reminders = Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
 
-     // implicit val reminderReads = Json.reads[Reminder]
-
       Ok(Json.toJson(reminders.map(_.what)))
 
     }
@@ -79,26 +76,7 @@ object Application extends Controller {
     Logger.info("Mentions: %s".format(mentions))
 
     for (mention <- mentions) {
-
       TwitterHelpers.handleMention(mention)
-
-      /*
-      val jsonString = Converters.getJsonStringFromStatus(mention)
-      Logger.info("Got JSON String: {}", jsonString)
-
-      val json = Converters.getJsonFromStatus(mention)
-      Logger.info("Got JSON: {}", json)
-
-      // Check if it's an existing user
-      val user = Users.getOrCreateUser(mention.getUser.getScreenName)
-
-      Logger.info("Handling mention: {} for user {}", mention, user)
-
-      val tweet = TweetHelpers.fromStatus(user.get, mention)
-      val parsed = ReminderParsing.parseStatusText(mention.getText)
-
-      Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
-      */
     }
 
     Logger.info("Putting into mentions")
@@ -107,17 +85,10 @@ object Application extends Controller {
 
 
   def testMentions = Action {
-    //val testString: String = "{createdAt=2013-11-20, id=404331790371807232, text='@remindtweets Remind Me to fish at 2013-12-2', source='web', isTruncated=false, inReplyToStatusId=-1, inReplyToUserId=2205796142, isFavorited=false, inReplyToScreenName='remindtweets', geoLocation=null, place=null, retweetCount=0, isPossiblySensitive=false, contributorsIDs=J@a49c723, retweetedStatus=null, userMentionEntities=[{name='George', screenName='remindtweets', id=2205796142}], urlEntities=[], hashtagEntities=[], mediaEntities=[], currentUserRetweetId=-1, user={id=42805000, name='Herbie Lewis', screenName='HerbieLewis', location='New York', description='Ending the world one proton at a time...', isContributorsEnabled=false, profileImageUrl='http://pbs.twimg.com/profile_images/1333372815/MeBeer_normal.jpg', profileImageUrlHttps='https://pbs.twimg.com/profile_images/1333372815/MeBeer_normal.jpg', url='http://t.co/Wp8W6tZCbf', isProtected=false, followersCount=123, status=null, profileBackgroundColor='C0DEED', profileTextColor='333333', profileLinkColor='0084B4', profileSidebarFillColor='DDEEF6', profileSidebarBorderColor='C0DEED', profileUseBackgroundImage=true, showAllInlineMedia=false, friendsCount=436, createdAt=2011-11-23, favouritesCount=12, utcOffset=-21600, timeZone='Central Time (US & Canada)', profileBackgroundImageUrl='http://abs.twimg.com/images/themes/theme1/bg.png', profileBackgroundImageUrlHttps='https://abs.twimg.com/images/themes/theme1/bg.png', profileBackgroundTiled=false, lang='en', statusesCount=1530, isGeoEnabled=false, isVerified=false, translator=false, listedCount=2, isFollowRequestSent=false}}"
     val status = Converters.createStatusFromJsonString(Converters.dummyJsonA)
 
     Logger.info("Status: {}", status)
     Ok(views.html.index("Fish"))
-  }
-
-
-  def issueReminders = DBAction { implicit rs =>
-    ReminderIssuer.issueReminders
-    Ok("SUP")
   }
 
 }

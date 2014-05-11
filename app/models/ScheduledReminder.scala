@@ -47,7 +47,7 @@ case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long, t
   }
 }
 
-// Definition of the COFFEES table
+
 class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "scheduledreminders") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -61,7 +61,14 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
 
 
   def * = (id.?, reminderId, userId, time, executed, cancelled, inProgress, failed) <> (ScheduledReminder.tupled, ScheduledReminder.unapply)
+
+  // Create a foreign key relationship on reminders
+  def reminder = foreignKey("SCHEDULEDREMINDER_REMINDER_FK", reminderId, Reminders.reminders)(_.id)
+
+  // Create a foreign key relationship on reminders
+  def user = foreignKey("SCHEDULEDREMINDER_USER_FK", userId, Users.users)(_.id)
 }
+
 
 object ScheduledReminders {
   val scheduledReminders = TableQuery[ScheduledReminders]

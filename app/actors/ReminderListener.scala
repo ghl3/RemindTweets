@@ -4,9 +4,8 @@ import akka.actor._
 import akka.routing.RoundRobinRouter
 import play.Logger
 import org.joda.time.DateTime
-import helpers.{TwitterHelpers, TwitterApi}
+import helpers.TwitterHelpers
 
-import scala.collection.JavaConverters._
 import twitter4j.Status
 
 import play.api.Play.current
@@ -19,7 +18,7 @@ import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
 
-object ListenerScheduler {
+object ReminderListener {
 
   def calculate(interval: FiniteDuration, nListeners: Integer) {
 
@@ -52,11 +51,14 @@ class ReminderListener(nListeners: Integer) extends Actor {
 
     case GetMentions(initialTime) =>
 
+      Logger.info("Getting Mentions...")
+      /*
       val mentions = TwitterApi.getMentions.asScala.iterator
       Logger.info("Mentions: %s".format(mentions))
       for (mention <- mentions) {
         reminderParserRouter ! ParseAndHandleMention(mention)
       }
+      */
   }
 }
 
@@ -73,23 +75,3 @@ class ReminderParser extends Actor {
       }
   }
 }
-
-/*
-class ReminderAdder extends Actor {
-
-  override def receive = {
-    case TweetRequest(scheduledReminderId, screenName, content) =>
-      try {
-
-        Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
-
-        val status: String = "%s %s".format(screenName, content)
-        Logger.info("Sending tweet '{}'", status)
-        sender ! ReminderSuccess(scheduledReminderId)
-      } catch {
-        case e: Exception => sender ! ReminderFailure(scheduledReminderId)
-      }
-    case x => Logger.error("Unknown message received by TweetSender: %s" format x)
-  }
-}
-*/

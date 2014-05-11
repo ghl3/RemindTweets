@@ -45,6 +45,11 @@ class Tweets(tag: Tag) extends Table[Tweet](tag, "tweets") {
   def fetchedAt = column[DateTime]("fetchedat")
 
   def * = (id.?, userId, twitterId, screenName, content, fetchedAt) <> (Tweet.tupled, Tweet.unapply _)
+
+  def uniqueTwitterId = index("UNIQUE_TWEET_TWITTERID", twitterId, unique = true)
+
+  // Create a foreign key relationship on users
+  def user = foreignKey("TWEET_USER_FK", userId, Users.users)(_.id)
 }
 
 

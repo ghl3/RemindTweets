@@ -59,7 +59,15 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
 
   def * = (id.?,  userId, twitterId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
+  def uniqueTwitterId = index("UNIQUE_REMINDER_TWITTERID", twitterId, unique = true)
+
+  def user = foreignKey("TWEET_USER_FK", userId, Users.users)(_.id)
+
+  def tweet = foreignKey("REMINDER_TWEET_FK", twitterId, Tweets.tweets)(_.id)
+
+
 }
+
 
 object Reminders {
 
