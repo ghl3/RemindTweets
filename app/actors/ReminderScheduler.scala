@@ -24,7 +24,7 @@ object ReminderScheduler {
     // Create an Akka system
     val system = ActorSystem("ReminderScheduler")
 
-    val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="master")
+    val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="masterScheduler")
 
     // Schedule a new batch to be run every 30 seconds
     // The new batch is obtained from reminders scheduled for

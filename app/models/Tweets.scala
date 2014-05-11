@@ -19,7 +19,7 @@ case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: St
 
   // We internally store a twitter4j object
   // for convenience
-  val obj = Converters.createStatusFromJson(content)
+  val obj = Converters.createStatusFromJson(content).getOrElse(null)
 
   // Convert the internal json4s object to a string
   def jsonString(): String = {
@@ -95,12 +95,20 @@ object Tweets {
 
   object TweetHelpers {
 
+    @Deprecated
     def fromStatus(user: User, status: twitter4j.Status): Tweet = {
+
+      Logger.info("Getting JSON string from status")
       val statusJson: String = Converters.getJsonStringFromStatus(status)
+      Logger.info("Got JSON string from status: {}", statusJson)
 
       Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
       val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
 
+      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
+    }
+
+    def fromStatusAndJson(user: User, status: twitter4j.Status, json: JsValue): Tweet = {
       Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
   }

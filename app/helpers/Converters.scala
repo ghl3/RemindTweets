@@ -6,21 +6,20 @@ import play.api.libs.json.JsValue
 
 object Converters {
 
-
   def createStatusFromJsonString(jsonString: String): twitter4j.Status = {
     twitter4j.json.DataObjectFactory.createStatus(jsonString)
   }
 
-  def createStatusFromJson(json: JsValue): twitter4j.Status = {
+  def createStatusFromJson(json: JsValue): Option[twitter4j.Status] = {
     try {
       //implicit val formats =org.json4s.DefaultFormats
       val jsonString: String = json.toString() // extract[String] //getJsonStringFromJson(json) //json.extract[String]
-      return createStatusFromJsonString(jsonString)
+      Some(createStatusFromJsonString(jsonString))
     }
     catch {
       case e: Exception =>
         Logger.error("Failed to create twitter status", e)
-        return null
+        None
     }
   }
 
@@ -38,7 +37,7 @@ object Converters {
     play.api.libs.json.Json.stringify(json)
   }
 
-  def getJsonFromString(jsonString: String) : JsValue = {
+  def getJsonFromString(jsonString: String): JsValue = {
     play.api.libs.json.Json.parse(jsonString)
   }
 

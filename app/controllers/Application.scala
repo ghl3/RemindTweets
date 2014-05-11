@@ -76,7 +76,7 @@ object Application extends Controller {
     Logger.info("Mentions: %s".format(mentions))
 
     for (mention <- mentions) {
-      TwitterHelpers.handleMention(mention)
+      TwitterHelpers.handleMentionThreadLocal(mention)
     }
 
     Logger.info("Putting into mentions")

@@ -38,7 +38,6 @@ case class Reminder(id: Option[Long], userId: Long, twitterId: Long, createdAt: 
   def getUser(implicit s: Session): Option[User] = {
     Users.findById(this.userId)
   }
-
 }
 
 object Repeat extends Enumeration {
@@ -60,10 +59,11 @@ class Reminders(tag: Tag) extends Table[Reminder](tag, "reminders") {
   def * = (id.?,  userId, twitterId, createdAt, repeat, firstTime, what, tweetId) <> (Reminder.tupled, Reminder.unapply _)
 
   def uniqueTwitterId = index("UNIQUE_REMINDER_TWITTERID", twitterId, unique = true)
+  def uniqueTweetId = index("UNIQUE_REMINDER_TWEETID", tweetId, unique = true)
 
   def user = foreignKey("TWEET_USER_FK", userId, Users.users)(_.id)
 
-  def tweet = foreignKey("REMINDER_TWEET_FK", twitterId, Tweets.tweets)(_.id)
+  def tweet = foreignKey("REMINDER_TWEET_FK", tweetId, Tweets.tweets)(_.id)
 
 
 }
@@ -104,20 +104,10 @@ object Reminders {
       case ReminderParsing.Success(what, time, repeat) =>
 
         Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
-        // First, we check if we've already created a reminder for this tweet.
-        // We don't want to double count
 
-        /*
-        val existingTweet = Tweets.findByTwitterId(tweet.twitterId)
-
-        if (existingTweet.isDefined) {
-          Logger.debug("Already found tweet in database. Not resaving")
-          return None
-        }
-        val savedTweet = Tweets.insertAndGet(tweet)
-        */
         val savedTweet  = Tweets.insertIfUniqueTweetAndGet(tweet)
         val createdReminder = Reminders.createFromTweetIfUnique(user, savedTweet, ReminderParsing.Success(what, time, repeat))
+
         createdReminder match {
           case Some(reminder) =>
             Logger.info("Saving reminder into database and scheduling first reminder")

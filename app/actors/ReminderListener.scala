@@ -4,7 +4,7 @@ import akka.actor._
 import akka.routing.RoundRobinRouter
 import play.Logger
 import org.joda.time.DateTime
-import helpers.TwitterHelpers
+import helpers.{Converters, TwitterApi, TwitterHelpers}
 
 import twitter4j.Status
 
@@ -17,6 +17,9 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 
+import scala.collection.JavaConverters._
+import play.api.libs.json.JsValue
+
 
 object ReminderListener {
 
@@ -25,7 +28,7 @@ object ReminderListener {
     // Create an Akka system
     val system = ActorSystem("MentionListener")
 
-    val master = system.actorOf(Props(new ReminderListener(nListeners)), name="master")
+    val master = system.actorOf(Props(new ReminderListener(nListeners)), name="masterListener")
 
     // Schedule a new batch to be run every 30 seconds
     // The new batch is obtained from reminders scheduled for
@@ -52,26 +55,30 @@ class ReminderListener(nListeners: Integer) extends Actor {
     case GetMentions(initialTime) =>
 
       Logger.info("Getting Mentions...")
-      /*
+
       val mentions = TwitterApi.getMentions.asScala.iterator
-      Logger.info("Mentions: %s".format(mentions))
-      for (mention <- mentions) {
-        reminderParserRouter ! ParseAndHandleMention(mention)
+      Logger.info("Mentions: %s".format(mentions.map(_.toString)))
+      for (mention: twitter4j.Status <- mentions) {
+        val json = Converters.getJsonFromStatus(mention)
+        reminderParserRouter ! ParseAndHandleMention(mention, json)
       }
-      */
   }
 }
 
 
-case class ParseAndHandleMention(mention: Status)
+case class ParseAndHandleMention(mention: Status, json: JsValue)
 
 class ReminderParser extends Actor {
 
   override def receive: Receive = {
-    case ParseAndHandleMention(mention) =>
+
+    case ParseAndHandleMention(mention, json) =>
+
+      Logger.info("Actor Handling mention: {} {}", mention, json)
+
       play.api.db.slick.DB.withSession {
         implicit session =>
-          TwitterHelpers.handleMention(mention)
+          TwitterHelpers.handleMention(mention, json)
       }
   }
 }
