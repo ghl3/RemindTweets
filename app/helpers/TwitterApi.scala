@@ -11,6 +11,14 @@ import scala.collection.JavaConverters._
 object TwitterApi {
 
 
+  // We import types from the TwitterApi to be able to
+  // manage where and how they are used
+  type Status = twitter4j.Status
+  type Paging = twitter4j.Paging
+  type User = twitter4j.User
+  type ResponseList[T] = twitter4j.ResponseList[T]
+
+
   val MAX_TIMELINE_TWEETS = 800
 
   case class TwitterStatusAndJson(status: twitter4j.Status, json: JsValue) {
@@ -22,8 +30,6 @@ object TwitterApi {
   def getScreenName = TwitterApiInternal.getTwitter.getScreenName
 
   def getId = TwitterApiInternal.getTwitter.getId
-
-  //def getMentionsTimeline = TwitterApiInternal.getTwitter.getMentionsTimeline
 
 
   def getMentionsTimeline = {
@@ -59,6 +65,9 @@ object TwitterApi {
     for (mention <- TwitterApiInternal.getTwitter.getUserTimeline(screenName).asScala.view) yield new TwitterStatusAndJson(mention)
   }
 
+  def createStatusFromJsonString(jsonString: String): Status = {
+    twitter4j.json.DataObjectFactory.createStatus(jsonString)
+  }
 
   /**
    * We encapsulate the actual twitter api
@@ -88,7 +97,6 @@ object TwitterApi {
         .setUseSSL(true)
         .build()
     }
-
 
 
     // Easy wrappers for JSON conversion
@@ -130,7 +138,6 @@ object TwitterApi {
       // and calls these adequate listener methods continuously.
       twitterStream.sample()
     }
-
 
 
     class TweetListener(val statusAction: (Status) => Unit) extends StatusListener {

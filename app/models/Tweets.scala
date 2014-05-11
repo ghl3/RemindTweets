@@ -3,12 +3,11 @@ package models
 import org.joda.time.DateTime
 
 import app.MyPostgresDriver.simple._
-import play.Logger
 import helpers.Converters
 
 import play.api.libs.json.JsValue
-import play.api.libs.json.Json
 
+import helpers.TwitterApi.Status
 
 
 case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: String, content: JsValue, fetchedAt: DateTime) {
@@ -24,7 +23,7 @@ case class Tweet(id: Option[Long], userId: Long, twitterId: Long, screenName: St
 
   // Convert the internal json4s object to a
   // twitter4j Status object
-  def getStatus: twitter4j.Status = {
+  def getStatus: Status = {
     obj
   }
 
@@ -91,40 +90,9 @@ object Tweets {
 
   object TweetHelpers {
 
-    /*
-    def fromStatusAndJson(user: User, status: twitter4j.Status, json: JsValue): Tweet = {
-
-      Logger.info("Getting JSON string from status")
-      Logger.info("Got JSON string from status: {}", json)
-
-      Logger.info("Creating Tweet from status: {} json: {}", status, json)
-
-      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
-    }
-    */
-
-    /*
-    @Deprecated
-    def fromStatus(user: User, status: twitter4j.Status): Tweet = {
-
-      //Logger.info("Getting JSON string from status")
-      //val statusJson: String = Converters.getJsonStringFromStatus(status)
-      //Logger.info("Got JSON string from status: {}", statusJson)
-
-      //Logger.info("Creating Tweet from status: {} json: {}", status, statusJson)
-      //val json: JsValue = Json.parse(statusJson); //JsonMethods.parse(statusJson)
-
-      Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
-    }
-*/
-    def fromStatusAndJson(user: User, status: twitter4j.Status, json: JsValue): Tweet = {
+    def fromStatusAndJson(user: User, status: Status, json: JsValue): Tweet = {
       Tweet(None, user.id.get, status.getId, status.getUser.getScreenName, json, DateTime.now())
     }
   }
-/*
-  def getUserTweetsFromTimeline(user: User, timeline: Iterable[twitter4j.Status]) : Iterable[Tweet] = {
-    for (status <- timeline) yield TweetHelpers.fromStatus(user, status)
-  }
-  */
 
 }

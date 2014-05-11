@@ -1,4 +1,5 @@
-import models.{Repeat, ReminderParsing}
+import helpers.ReminderParsing
+import models.Repeat
 
 import org.joda.time.{DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite

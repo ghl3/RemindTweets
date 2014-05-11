@@ -3,6 +3,7 @@ package models
 import org.joda.time.LocalDateTime
 import app.MyPostgresDriver.simple._
 
+import helpers.TwitterApi
 
 // TODO: Add twitterid
 case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) {
@@ -78,7 +79,7 @@ object Users {
    * @param user
    * @return
    */
-  def createUser(user: twitter4j.User)(implicit s: Session): User = {
+  def createUser(user: TwitterApi.User)(implicit s: Session): User = {
     insertAndGet(new User(None, user.getScreenName, LocalDateTime.now()))
   }
 

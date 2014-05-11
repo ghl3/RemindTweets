@@ -1,8 +1,7 @@
 package controllers
 
 import play.Logger
-import helpers.{TwitterHelpers, TwitterApi, Converters}
-import scala.collection.JavaConverters._
+import helpers.{TwitterApi, Converters}
 
 import app.MyPostgresDriver.simple._
 
@@ -77,19 +76,13 @@ object Application extends Controller {
     val mentions = TwitterApi.getMentionsTimeline
     Logger.info("Mentions: %s".format(mentions))
 
-    /*
-    for (mention <- mentions) {
-      TwitterHelpers.handleMentionThreadLocal(mention)
-    }
-    */
-
     Logger.info("Putting into mentions")
     Ok(views.html.mentions(mentions.iterator))
   }
 
 
   def testMentions = Action {
-    val status = Converters.createStatusFromJsonString(Converters.dummyJsonA)
+    val status = TwitterApi.createStatusFromJsonString(Converters.dummyJsonA)
 
     Logger.info("Status: {}", status)
     Ok(views.html.index("Fish"))

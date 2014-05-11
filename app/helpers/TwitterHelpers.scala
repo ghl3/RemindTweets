@@ -4,7 +4,7 @@ import play.Logger
 
 import models.{Reminders, Users}
 import models.Tweets.TweetHelpers
-import twitter4j.Status
+import TwitterApi.Status
 import play.api.db.slick.Session
 import play.api.libs.json.JsValue
 
@@ -24,21 +24,4 @@ object TwitterHelpers {
     Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
 
   }
-
-  /*
-  @Deprecated
-  def handleMentionThreadLocal(mention: Status)(implicit s: Session) = {
-
-    // Check if it's an existing user
-    val user = Users.getOrCreateUser(mention.getUser.getScreenName)
-
-    Logger.info("Handling mention: {} for user {}", mention, user)
-
-    val tweet = TweetHelpers.fromStatus(user.get, mention)
-    val parsed = ReminderParsing.parseStatusText(mention.getText)
-
-    Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
-
-  }
-  */
 }

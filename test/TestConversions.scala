@@ -1,9 +1,11 @@
 
 
-import helpers.Converters
+import helpers.{TwitterApi, Converters}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
 import play.Logger
+
+import helpers.TwitterApi.Status
 
 class TestConversions extends JUnitSuite {
 
@@ -77,7 +79,7 @@ class TestConversions extends JUnitSuite {
 
   @Test
   def stringToJsonC {
-    val status: twitter4j.Status = Converters.createStatusFromJsonString(dummyJsonA)
+    val status: Status = TwitterApi.createStatusFromJsonString(dummyJsonA)
     assert(status.getUser.getScreenName === "HerbieLewis")
   }
 

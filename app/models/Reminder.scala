@@ -13,6 +13,8 @@ import models.Repeat.Frequency
 import helpers.ReminderParsing
 import helpers.TwitterApi.TwitterStatusAndJson
 
+import helpers.TwitterApi.Status
+
 
 /**
  * A user-created request to be reminded
@@ -144,7 +146,7 @@ object Reminders {
     if (existingReminder.isDefined) {
       None
     } else {
-      Some(createFromTweet(user, tweet, parsed)) //Reminder(None, user.id.get, tweet.twitterId, DateTime.now(), parsed.repeat, parsed.firstTime, parsed.what, tweet.id.get)_
+      Some(createFromTweet(user, tweet, parsed))
     }
   }
 
@@ -169,7 +171,7 @@ object Reminders {
    * @param status
    * @return
    */
-  def isReminder(status: twitter4j.Status): Boolean = {
+  def isReminder(status: Status): Boolean = {
     ReminderParsing.parseStatusText(status.getText) match {
       case ReminderParsing.Success(_,_,_) => true
       case _ => false

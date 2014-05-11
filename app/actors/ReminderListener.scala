@@ -6,7 +6,7 @@ import play.Logger
 import org.joda.time.DateTime
 import helpers.{TwitterApi, TwitterHelpers}
 
-import twitter4j.{Paging, Status}
+import TwitterApi.{Paging, Status}
 
 import play.api.Play.current
 import scala.concurrent.duration.Duration

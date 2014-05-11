@@ -3,18 +3,16 @@ package helpers
 import play.Logger
 import play.api.libs.json.JsValue
 
+import TwitterApi.Status
 
 object Converters {
 
-  def createStatusFromJsonString(jsonString: String): twitter4j.Status = {
-    twitter4j.json.DataObjectFactory.createStatus(jsonString)
-  }
 
-  def createStatusFromJson(json: JsValue): Option[twitter4j.Status] = {
+  def createStatusFromJson(json: JsValue): Option[Status] = {
     try {
       //implicit val formats =org.json4s.DefaultFormats
       val jsonString: String = json.toString() // extract[String] //getJsonStringFromJson(json) //json.extract[String]
-      Some(createStatusFromJsonString(jsonString))
+      Some(TwitterApi.createStatusFromJsonString(jsonString))
     }
     catch {
       case e: Exception =>

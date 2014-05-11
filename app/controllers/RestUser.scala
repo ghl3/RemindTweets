@@ -1,7 +1,6 @@
 package controllers
 
 import helpers.TwitterApi
-import scala.collection.JavaConverters._
 
 import play.api.mvc._
 import models._
