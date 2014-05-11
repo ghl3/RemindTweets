@@ -12,7 +12,11 @@ import play.api.libs.json.Json
 object RestUser extends Controller {
 
 
-  def user(screenName: String) = DBAction { implicit rs =>
+  def user = Action {
+    Ok(views.html.user())
+  }
+
+  def userReminders(screenName: String) = DBAction { implicit rs =>
 
     val user: Option[models.User] = Users.findByScreenName(screenName)
 
@@ -20,7 +24,7 @@ object RestUser extends Controller {
       NotFound("User with screen_name %s was not found".format(screenName))
     } else {
       val reminders = user.get.getReminders
-      Ok(views.html.user(user.get, reminders))
+      Ok(views.html.userReminders(user.get, reminders))
     }
   }
 

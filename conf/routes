@@ -8,10 +8,12 @@ GET   /                                       controllers.Application.index
 
 
 # User views
-GET    /user/:screenName                      controllers.RestUser.user(screenName: String)
+GET    /user                                  controllers.RestUser.user
+GET    /user/:screenName/reminders            controllers.RestUser.userReminders(screenName: String)
+POST   /user/:screenName/reminders            controllers.RestUser.checkForReminders(screenName: String)
+
 GET    /user/:screenName/timeline             controllers.RestUser.userTimeline(screenName: String)
 GET    /user/:screenName/scheduledReminders   controllers.RestUser.userScheduledReminders(screenName: String)
-POST   /user/:screenName/reminders            controllers.RestUser.checkForReminders(screenName: String)
 
 
 # Reminders

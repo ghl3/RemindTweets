@@ -1,0 +1,39 @@
+@(user: User, reminders: List[Reminder])
+
+@import helpers._
+@import TwitterApi.{ResponseList,Status}
+
+@main("User") {
+
+<div class="container">
+
+    <h2 class="sub-header">Upcoming reminders for @user.screenName</h2>
+
+    <div class="table-responsive span8">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>What</th>
+                <th>When</th>
+                <th>How Often</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            @reminders.map { reminder =>
+            <tr>
+                <td>@reminder.id</td>
+                <td>@reminder.what</td>
+                <td>@reminder.firstTime</td>
+                <td>@reminder.repeat</td>
+            </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+}

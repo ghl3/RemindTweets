@@ -1,19 +1,23 @@
-@(user: User, reminders: List[Reminder])
 
-@import helpers._
-@import TwitterApi.{ResponseList,Status}
+@main("Welcome to Play") {
 
-@main("User") {
+<div class="container">
 
-User: @user.screenName
+    <div class="starter-template">
+        <p class="lead">To view your reminders, enter your Twitter Screen Name</p>
+    </div>
 
-<ul>
-    @reminders.map { reminder =>
-    <li>
-       Remind me to @reminder.what @reminder.firstTime
-    </li>
-    }
-</ul>
+    <form class="form-signin" role="form">
+        <input type="text" class="form-control" placeholder="Screen Name" required autofocus>
+        <br>
+        <!--
+        <label class="checkbox">
+            <input type="checkbox" value="remember-me"> Remember me
+        </label>
+        -->
+        <button class="btn btn-lg btn-primary btn-block" type="submit">View Reminders</button>
+    </form>
 
+</div>
 
 }
