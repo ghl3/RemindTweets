@@ -6,6 +6,8 @@
 # Home page
 GET   /                                       controllers.Application.index
 
+GET   /signIn                                 controllers.Authentication.twitter
+
 
 # User views
 GET    /user                                  controllers.RestUser.user

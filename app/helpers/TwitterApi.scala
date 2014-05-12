@@ -69,6 +69,11 @@ object TwitterApi {
     twitter4j.json.DataObjectFactory.createStatus(jsonString)
   }
 
+
+  def authenticate(callback: String) = {
+    TwitterApiInternal.getAuthFactory.getOAuthRequestToken(callback)
+  }
+
   /**
    * We encapsulate the actual twitter api
    * for a number of reasons (testing,
@@ -97,6 +102,27 @@ object TwitterApi {
         .setUseSSL(true)
         .build()
     }
+
+
+    def getAuthConfig: Configuration = {
+
+      val vars = getConfigVariableFromEnv
+
+      new twitter4j.conf.ConfigurationBuilder()
+        .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
+        .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
+        .setOAuthAccessToken(vars.getOrElse("accessToken", null))
+        .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
+        .setUseSSL(true)
+        .build()
+    }
+
+
+    def getAuthFactory: Twitter = {
+      val tf = new TwitterFactory(getAuthConfig)
+      tf.getInstance()
+    }
+
 
 
     // Easy wrappers for JSON conversion
