@@ -69,7 +69,6 @@ object TwitterApi {
     twitter4j.json.DataObjectFactory.createStatus(jsonString)
   }
 
-
   def authenticate(callback: String) = {
     TwitterApiInternal.getAuthFactory.getOAuthRequestToken(callback)
   }
@@ -111,8 +110,7 @@ object TwitterApi {
       new twitter4j.conf.ConfigurationBuilder()
         .setOAuthConsumerKey(vars.getOrElse("consumerKey", null))
         .setOAuthConsumerSecret(vars.getOrElse("consumerSecret", null))
-        .setOAuthAccessToken(vars.getOrElse("accessToken", null))
-        .setOAuthAccessTokenSecret(vars.getOrElse("accessTokenSecret", null))
+        .setPrettyDebugEnabled(true)
         .setUseSSL(true)
         .build()
     }
