@@ -6,6 +6,7 @@ import twitter4j.conf.Configuration
 import play.api.libs.json.JsValue
 
 import scala.collection.JavaConverters._
+import twitter4j.auth.RequestToken
 
 
 object TwitterApi {
@@ -72,6 +73,12 @@ object TwitterApi {
   def authenticate(callback: String) = {
     TwitterApiInternal.getAuthFactory.getOAuthRequestToken(callback)
   }
+
+  def authenticateToken(token: String, tokenSecret: String, verifier: String) = {
+    val requestToken: RequestToken = new RequestToken(token, tokenSecret)
+    TwitterApiInternal.getAuthFactory.getOAuthAccessToken(requestToken, verifier)
+  }
+
 
   /**
    * We encapsulate the actual twitter api
