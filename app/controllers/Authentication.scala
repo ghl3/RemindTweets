@@ -13,7 +13,7 @@ object Authentication extends Controller {
 
   def twitterSignIn = Action { request =>
 
-    val callback = Play.current.configuration.getStringList("url")+"/verify" // "http://127.0.0.1:9000/verify"
+    val callback = Play.current.configuration.getString("redirect.url")+"/verify" // "http://127.0.0.1:9000/verify"
 
     Logger.debug("Attempting to authenticate twitter user")
     val requestToken = TwitterApi.authenticate(callback)
