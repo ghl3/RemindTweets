@@ -1,16 +1,19 @@
 package controllers
 
-import play.api.mvc.{Controller, Action}
+import play.api.mvc._
 import helpers.TwitterApi
 import play.Logger
 
+// Based on:
+// https://github.com/yusuke/sign-in-with-twitter/blob/master/src/main/java/twitter4j/examples/signin/CallbackServlet.java
 
 object Authentication extends Controller {
 
-  def twitter = Action {request =>
+  def twitter = Action { request =>
 
     val callback = "http://127.0.0.1:9000/verify"
 
+    Logger.debug("Attempting to authenticate twitter user")
     val requestToken = TwitterApi.authenticate(callback)
 
     val token = requestToken.getToken
@@ -27,8 +30,7 @@ object Authentication extends Controller {
     )
   }
 
-
-  def twitterVerify = Action {request =>
+  def twitterVerify = Action { request =>
 
     Logger.info("Session: {}", request.session)
 
@@ -42,9 +44,30 @@ object Authentication extends Controller {
       val access = TwitterApi.authenticateToken(requestToken.get, requestTokenSecret.get, oauthVerifier.get)
 
       Logger.info("Successfully logged in %s %s".format(access.getScreenName, access.getUserId))
-    }
 
-    Ok("SUP")
+      Ok("Authenticated").withSession(
+        request.session + ("twitterScreenName" -> access.getScreenName)
+      )
+    } else {
+      Forbidden("Not verified")
+    }
+  }
+
+
+  def whoAmI = Action { request =>
+    Logger.info("Session: {}", request.session)
+    request.session.get("twitterScreenName") match {
+      case (Some(screenName)) => Ok(screenName)
+      case None => Forbidden("Not verified")
+    }
+  }
+
+
+  def isSignedIn(screenName: String, session: Session) = {
+    session.get("twitterScreenName") match {
+      case (Some(`screenName`)) => true
+      case _ => false
+    }
   }
 
 }

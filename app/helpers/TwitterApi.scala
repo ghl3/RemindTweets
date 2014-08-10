@@ -70,7 +70,7 @@ object TwitterApi {
     twitter4j.json.DataObjectFactory.createStatus(jsonString)
   }
 
-  def authenticate(callback: String) = {
+  def authenticate(callback: String): RequestToken = {
     TwitterApiInternal.getAuthFactory.getOAuthRequestToken(callback)
   }
 

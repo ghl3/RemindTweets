@@ -17,33 +17,44 @@ object RestUser extends Controller {
   }
 
   def userReminders(screenName: String) = DBAction { implicit rs =>
-
-    val user: Option[models.User] = Users.findByScreenName(screenName)
-
-    if (user.isEmpty) {
-      NotFound("User with screen_name %s was not found".format(screenName))
+    if(!Authentication.isSignedIn(screenName, rs.session)) {
+      Forbidden("Forbidden, yo")
     } else {
-      val reminders = user.get.getReminders
-      Ok(views.html.userReminders(user.get, reminders))
+      val user: Option[models.User] = Users.findByScreenName(screenName)
+
+      if (user.isEmpty) {
+        NotFound("User with screen_name %s was not found".format(screenName))
+      } else {
+        val reminders = user.get.getReminders
+        Ok(views.html.userReminders(user.get, reminders))
+      }
     }
   }
 
 
   def userTimeline(screenName: String) = DBAction { implicit rs =>
 
-    val timeline = TwitterApi.getUserTimeline(screenName)
+    if(!Authentication.isSignedIn(screenName, rs.session)) {
+      Forbidden("Forbidden, yo")
+    } else {
 
-    val format = new java.text.SimpleDateFormat("dd-MM-yyyy")
+      val timeline = TwitterApi.getUserTimeline(screenName)
 
-    val texts = for (status <- timeline) yield Json.obj("status" -> status.getText,
-      "createdAt" -> format.format(status.getCreatedAt))
+      val format = new java.text.SimpleDateFormat("dd-MM-yyyy")
 
-    Ok(Json.arr(texts))
+      val texts = for (status <- timeline) yield Json.obj("status" -> status.getText,
+        "createdAt" -> format.format(status.getCreatedAt))
+
+      Ok(Json.arr(texts))
+    }
   }
 
 
-  def userScheduledReminders(screenName: String) = DBAction {
-    implicit rs =>
+  def userScheduledReminders(screenName: String) = DBAction { implicit rs =>
+
+    if(!Authentication.isSignedIn(screenName, rs.session)) {
+      Forbidden("Forbidden, yo")
+    } else {
 
       val user: Option[models.User] = Users.findByScreenName(screenName)
 
@@ -53,6 +64,7 @@ object RestUser extends Controller {
         val scheduledReminders = user.get.getScheduledReminders
         Ok(views.html.scheduledReminders(scheduledReminders))
       }
+    }
   }
 
 
