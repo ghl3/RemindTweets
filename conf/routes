@@ -5,10 +5,13 @@
 
 # Home page
 GET   /                                       controllers.Application.index
+GET   /reminders                               controllers.Application.reminders
 
+
+# Twitter Authentication
 GET   /signIn                                 controllers.Authentication.twitterSignIn
 GET   /verify                                 controllers.Authentication.twitterVerify
-GET   /whoAmI                                 controllers.Authentication.whoAmI
+
 
 # User views
 GET    /user                                  controllers.RestUser.user

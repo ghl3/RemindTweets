@@ -1,11 +1,9 @@
 package controllers
 
-import play.api.db.slick.{DBSessionRequest, DBAction}
 import play.api.mvc._
 import helpers.TwitterApi
 import play.Logger
 
-import scala.concurrent.Future
 
 // Based on:
 // https://github.com/yusuke/sign-in-with-twitter/blob/master/src/main/java/twitter4j/examples/signin/CallbackServlet.java
@@ -57,12 +55,8 @@ object Authentication extends Controller {
   }
 
 
-  def whoAmI = Action { request =>
-    Logger.info("Session: {}", request.session)
-    request.session.get("twitterScreenName") match {
-      case (Some(screenName)) => Ok(screenName)
-      case None => Forbidden("Not verified")
-    }
+  def whoAmI(request: Request[_]) = {
+    request.session.get("twitterScreenName")
   }
 
 
@@ -72,6 +66,12 @@ object Authentication extends Controller {
       case _ => false
     }
   }
+
+/*
+https://github.com/playframework/play-slick/issues/81
+http://stackoverflow.com/questions/19780545/play-slick-with-securesocial-running-db-io-in-a-separate-thread-pool
+ */
+
 
 /*
   def TwitterSignIn = {
