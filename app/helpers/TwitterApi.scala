@@ -32,7 +32,6 @@ object TwitterApi {
 
   def getId = TwitterApiInternal.getTwitter.getId
 
-
   def getMentionsTimeline = {
     for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline.asScala.view) yield mention
   }
@@ -191,6 +190,5 @@ object TwitterApi {
 
       def onScrubGeo(p1: Long, p2: Long) {}
     }
-
   }
 }
