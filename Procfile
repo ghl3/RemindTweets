@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/remindtweets -Dhttp.port=${PORT} -Dconfig.resource=prod.conf -DapplyEvolutions.db6j6abucr54c0=true
+web: target/universal/stage/bin/remindtweets -Dhttp.port=${PORT} -Dconfig.resource=prod.conf -DapplyEvolutions.default=true
