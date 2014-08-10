@@ -6,7 +6,7 @@
 # Home page
 GET   /                                       controllers.Application.index
 
-GET   /signIn                                 controllers.Authentication.twitter
+GET   /signIn                                 controllers.Authentication.twitterSignIn
 GET   /verify                                 controllers.Authentication.twitterVerify
 GET   /whoAmI                                 controllers.Authentication.whoAmI
 

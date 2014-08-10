@@ -1,15 +1,18 @@
 package controllers
 
+import play.api.db.slick.{DBSessionRequest, DBAction}
 import play.api.mvc._
 import helpers.TwitterApi
 import play.Logger
+
+import scala.concurrent.Future
 
 // Based on:
 // https://github.com/yusuke/sign-in-with-twitter/blob/master/src/main/java/twitter4j/examples/signin/CallbackServlet.java
 
 object Authentication extends Controller {
 
-  def twitter = Action { request =>
+  def twitterSignIn = Action { request =>
 
     val callback = "http://127.0.0.1:9000/verify"
 
@@ -69,5 +72,47 @@ object Authentication extends Controller {
       case _ => false
     }
   }
+
+/*
+  def TwitterSignIn = {
+    Ok("Sign in")
+  }
+
+  def AuthenticateMe(screenName: String) = Action { implicit request =>
+    if(!Authentication.isSignedIn(screenName, request.session)) {
+      Forbidden("Forbidden, yo")
+    } else {
+      Results.Redirect(routes.Authentication.twitterSignIn)
+    }
+  }
+*/
+
+/*
+  class TwitterAuthenticatedRequest[A](val screenName: String, request: Request[A]) extends WrappedRequest[A](request)
+
+  object TwitterAuthenticated extends ActionBuilder[TwitterAuthenticatedRequest] {
+    def invokeBlock[A](request: Request[A], block: (TwitterAuthenticatedRequest[A]) => Future[SimpleResult]) = {
+      request.session.get("twitterScreenName").map { screenName =>
+        block(new TwitterAuthenticatedRequest(screenName, request))
+      } getOrElse {
+        Future.successful(Forbidden)
+      }
+    }
+  }
+
+  trait Secured {
+    private def username(request: RequestHeader) = request.session.get(Security.username)
+
+    private def onUnauthorized(request: RequestHeader) = {
+      Results.Redirect("/").flashing("error" -> "You need to login first.")
+    }
+
+    def IsAuthenticated(f: => String => DBSessionRequest[_] => SimpleResult) =
+      Security.Authenticated(username, onUnauthorized) {
+        user => DBAction(rs => f(user)(rs))
+      }
+  }
+*/
+
 
 }

@@ -76,18 +76,23 @@ object RestUser extends Controller {
    */
   def checkForReminders(screenName: String) = DBAction {implicit rs =>
 
-    val user = Users.getOrCreateUser(screenName)
+    if(!Authentication.isSignedIn(screenName, rs.session)) {
+      Forbidden("Forbidden, yo")
+    } else {
 
-    if (user.isEmpty) {
-      InternalServerError("Failed to get or create user with screen name %s".format(screenName))
-    }
-    else {
-      // Now that we've got the user, let's get his tweets
-      val timeline = TwitterApi.getUserTimelineAndJson(screenName)
+      val user = Users.getOrCreateUser(screenName)
 
-      val reminders = Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
+      if (user.isEmpty) {
+        InternalServerError("Failed to get or create user with screen name %s".format(screenName))
+      }
+      else {
+        // Now that we've got the user, let's get his tweets
+        val timeline = TwitterApi.getUserTimelineAndJson(screenName)
 
-      Ok(Json.toJson(reminders.map(_.what)))
+        val reminders = Reminders.createRemindersFromUserTwitterStatuses(user.get, timeline)
+
+        Ok(Json.toJson(reminders.map(_.what)))
+      }
     }
   }
 }
