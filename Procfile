@@ -1,1 +1,1 @@
-web: target/start -Dconfig.resource=prod.conf -Dhttp.port=${PORT} ${JAVA_OPTS} 
+web: target/universal/stage/bin/remindtweets -Dconfig.resource=prod.conf -DapplyEvolutions.default=true -Dhttp.port=${PORT} ${JAVA_OPTS}
