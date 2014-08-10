@@ -1,7 +1,5 @@
 import actors.{ReminderListener, ReminderScheduler}
 
-import com.typesafe.config.ConfigFactory
-import java.io.File
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import play.api._
