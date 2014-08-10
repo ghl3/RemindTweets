@@ -1,8 +1,9 @@
 package controllers
 
+import play.api.Play
 import play.api.mvc._
 import helpers.TwitterApi
-import play.Logger
+import play.{Logger}
 
 
 // Based on:
@@ -12,7 +13,7 @@ object Authentication extends Controller {
 
   def twitterSignIn = Action { request =>
 
-    val callback = "http://127.0.0.1:9000/verify"
+    val callback = Play.configuration.getStringList("url")+"/verify" // "http://127.0.0.1:9000/verify"
 
     Logger.debug("Attempting to authenticate twitter user")
     val requestToken = TwitterApi.authenticate(callback)
