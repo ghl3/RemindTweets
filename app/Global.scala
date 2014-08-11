@@ -22,6 +22,12 @@ object Global extends GlobalSettings {
 
     Logger.info("Starting app")
 
+    // One-time batch query all previous tweets since the latest
+    // tweet in the database
+    if (Play.configuration.getBoolean("parseTweetsBatch").getOrElse(false)) {
+      ReminderListener.fetchAndParseLatestTweets()
+    }
+
     if (Play.configuration.getBoolean("listenerScheduler.run").getOrElse(false)) {
       Logger.info("Starting listener actors")
       //val durationInSeconds = Play.configuration.getInt("reminderListener.intervalInSeconds").getOrElse(30)
