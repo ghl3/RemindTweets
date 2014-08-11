@@ -6,7 +6,7 @@ import play.Logger
 import org.joda.time.DateTime
 import helpers.{ReminderParsing, TwitterApi}
 
-import TwitterApi.{Paging, Status}
+import helpers.TwitterApi.{TweetListener, Paging, Status, TwitterStatusAndJson}
 
 import play.api.Play.current
 import scala.concurrent.duration.Duration
@@ -19,13 +19,13 @@ import ExecutionContext.Implicits.global
 
 import play.api.libs.json.JsValue
 import models.{Tweets, Users, Reminders}
-import helpers.TwitterApi.TwitterStatusAndJson
 import play.api.db.slick.Session
 
 
 object ReminderListener {
 
-  def calculate(interval: FiniteDuration, nListeners: Integer) {
+  /*
+  def beginListeningDiscreteIntervals(interval: FiniteDuration, nListeners: Integer) {
 
     // Create an Akka system
     val system = ActorSystem("MentionListener")
@@ -41,40 +41,66 @@ object ReminderListener {
       master,
       GetMentions(new DateTime()))
   }
-}
 
 
-case class GetMentions(initialTime: DateTime)
+  case class GetMentions(initialTime: DateTime)
 
-class ReminderListener(nListeners: Integer) extends Actor {
+  class ReminderListener(nListeners: Integer) extends Actor {
 
-  // The set of actors that handle twitter mentions
-  val reminderParserRouter = context.actorOf(
-    Props[ReminderParser].withRouter(RoundRobinRouter(nListeners)), name = "reminderParsers")
+    // The set of actors that handle twitter mentions
+    val reminderParserRouter = context.actorOf(
+      Props[ReminderParser].withRouter(RoundRobinRouter(nListeners)), name = "reminderParsers")
 
-  override def receive: Receive = {
+    override def receive: Receive = {
 
-    case GetMentions(initialTime) =>
+      case GetMentions(initialTime) =>
 
-      val maxMentionId: Option[Long] = play.api.db.slick.DB.withSession { implicit session =>
+        val maxMentionId: Option[Long] = play.api.db.slick.DB.withSession { implicit session =>
           Reminders.getLatestReminderTwitterId()
-      }
+        }
 
-      val paging: Paging = new Paging()
-      paging.setCount(TwitterApi.MAX_TIMELINE_TWEETS)
-      if (maxMentionId.isDefined) {
-        Logger.info("Getting mentions since twitter id: %s".format(maxMentionId.get))
-        paging.setSinceId(maxMentionId.get)
-      }
+        val paging: Paging = new Paging()
+        paging.setCount(TwitterApi.MAX_TIMELINE_TWEETS)
+        if (maxMentionId.isDefined) {
+          Logger.info("Getting mentions since twitter id: %s".format(maxMentionId.get))
+          paging.setSinceId(maxMentionId.get)
+        }
 
-      val mentions = TwitterApi.getMentionsAndJsonTimeline(paging)
+        val mentions = TwitterApi.getMentionsAndJsonTimeline(paging)
 
-      for (mention: TwitterStatusAndJson <- mentions) {
-        Logger.info("Sending mention %s to actors".format(mention.status.getId))
-        //val json = Converters.getJsonFromStatus(mention)
-        reminderParserRouter ! ParseAndHandleMention(mention.status, mention.json) //, json)
-      }
+        for (mention: TwitterStatusAndJson <- mentions) {
+          Logger.info("Sending mention %s to actors".format(mention.status.getId))
+          //val json = Converters.getJsonFromStatus(mention)
+          reminderParserRouter ! ParseAndHandleMention(mention.status, mention.json) //, json)
+        }
+    }
   }
+*/
+
+
+  def beginListeningStreaming() = {
+
+    // Create an Akka system
+    val system = ActorSystem("MentionListener")
+
+    // Create a set of parser actors
+    val parsers = system.actorOf(Props(new ReminderParser), name="masterParsers")
+
+    //twitterStream
+    val twitterStream = TwitterApi.getTwitterStream
+
+    // Create a listener that parses any incoming tweet
+    twitterStream.addListener(new TweetListener((status: Status) => {
+      // Have to get the json here in the same thread
+      val mention = new TwitterStatusAndJson(status)
+      parsers ! ParseAndHandleMention(mention.status, mention.json)
+    }))
+
+    // Setup a search for our handle
+    val search = new twitter4j.FilterQuery().track(Array("@remindtweets"))
+    twitterStream.filter(search)
+  }
+
 }
 
 

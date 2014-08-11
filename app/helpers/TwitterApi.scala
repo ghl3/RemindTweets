@@ -48,7 +48,6 @@ object TwitterApi {
     for (mention <- TwitterApiInternal.getTwitter.getMentionsTimeline(paging).asScala.view) yield new TwitterStatusAndJson(mention)
   }
 
-
   def getHomeTimeline = {
     for (mention <- TwitterApiInternal.getTwitter.getHomeTimeline.asScala.view) yield mention
   }
@@ -76,6 +75,11 @@ object TwitterApi {
   def authenticateToken(token: String, tokenSecret: String, verifier: String) = {
     val requestToken: RequestToken = new RequestToken(token, tokenSecret)
     TwitterApiInternal.getAuthFactory.getOAuthAccessToken(requestToken, verifier)
+  }
+
+
+  def getTwitterStream = {
+    TwitterApiInternal.getTwitterStream
   }
 
 
@@ -128,7 +132,6 @@ object TwitterApi {
     }
 
 
-
     // Easy wrappers for JSON conversion
 
     def getJsonStringFromStatus(status: twitter4j.Status): String = {
@@ -168,27 +171,27 @@ object TwitterApi {
       // and calls these adequate listener methods continuously.
       twitterStream.sample()
     }
-
-
-    class TweetListener(val statusAction: (Status) => Unit) extends StatusListener {
-
-      def onStatus(status: Status) {
-        statusAction(status)
-      }
-
-      def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) {}
-
-      def onTrackLimitationNotice(numberOfLimitedStatuses: Integer) {}
-
-      def onException(ex: Exception) {
-        ex.printStackTrace()
-      }
-
-      def onTrackLimitationNotice(p1: Int) {}
-
-      def onStallWarning(p1: StallWarning) {}
-
-      def onScrubGeo(p1: Long, p2: Long) {}
-    }
   }
+
+  class TweetListener(val statusAction: (Status) => Unit) extends StatusListener {
+
+    def onStatus(status: Status) {
+      statusAction(status)
+    }
+
+    def onDeletionNotice(statusDeletionNotice: StatusDeletionNotice) {}
+
+    def onTrackLimitationNotice(numberOfLimitedStatuses: Integer) {}
+
+    def onException(ex: Exception) {
+      ex.printStackTrace()
+    }
+
+    def onTrackLimitationNotice(p1: Int) {}
+
+    def onStallWarning(p1: StallWarning) {}
+
+    def onScrubGeo(p1: Long, p2: Long) {}
+  }
+
 }

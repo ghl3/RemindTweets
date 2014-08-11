@@ -24,14 +24,15 @@ object Global extends GlobalSettings {
 
     if (Play.configuration.getBoolean("listenerScheduler.run").getOrElse(false)) {
       Logger.info("Starting listener actors")
-      val durationInSeconds = Play.configuration.getInt("reminderListener.intervalInSeconds").getOrElse(30)
-      ReminderListener.calculate(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)
+      //val durationInSeconds = Play.configuration.getInt("reminderListener.intervalInSeconds").getOrElse(30)
+      //ReminderListener.beginListeningDiscreteIntervals(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)
+      ReminderListener.beginListeningStreaming()
     }
 
     if (Play.configuration.getBoolean("reminderScheduler.run").getOrElse(false)) {
       Logger.info("Starting Reminder Scheduler actors")
       val durationInSeconds = Play.configuration.getInt("reminderScheduler.intervalInSeconds").getOrElse(30)
-      ReminderScheduler.calculate(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)
+      ReminderScheduler.beginScheduler(Duration.create(durationInSeconds, TimeUnit.SECONDS), 1)
     }
   }
 
