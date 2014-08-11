@@ -31,7 +31,7 @@ class TestMentionParsing extends JUnitSuite {
     val todayAtFive = DateTime.now()
       .withHourOfDay(17)
       .withMinuteOfHour(0)
-      .withSecondOfMinute(0).withMillisOfSecond(0);
+      .withSecondOfMinute(0).withMillisOfSecond(0)
 
     assert(todayAtFive === reminderTime.get)
 
@@ -63,7 +63,7 @@ class TestMentionParsing extends JUnitSuite {
         assert(repeat === Repeat.Never)
         assert(what === "build this app")
         assert(firstTime === DateTime.now().plusDays(1).withTime(18,0,0,0))
-      case _ => assert(false)
+      case _ => assert(condition=false)
     }
   }
 
@@ -77,7 +77,7 @@ class TestMentionParsing extends JUnitSuite {
         assert(repeat === Repeat.Never)
         assert(what === "build this app")
         assert(firstTime === DateTime.now().plusDays(1).withTime(0,1,0,0))
-      case _ => assert(false)
+      case _ => assert(condition=false)
     }
   }
 
@@ -96,7 +96,7 @@ class TestMentionParsing extends JUnitSuite {
           assertTime = assertTime.plusWeeks(1)
         }
         assert(firstTime === assertTime)
-      case _ => assert(false)
+      case _ => assert(condition=false)
     }
   }
 

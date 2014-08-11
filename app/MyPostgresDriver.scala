@@ -3,7 +3,6 @@ package app
 import scala.slick.driver.PostgresDriver
 import com.github.tminglei.slickpg._
 import models.Repeat
-import models.Repeat.Frequency
 
 trait WithMyDriver {
   val driver: MyPostgresDriver
