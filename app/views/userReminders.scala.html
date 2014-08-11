@@ -3,7 +3,10 @@
 @import helpers._
 @import TwitterApi.{ResponseList,Status}
 
-@main("User") {
+@import org.joda.time.format.DateTimeFormat
+
+
+@components.main("User") {
 
 <div class="container">
 
@@ -26,7 +29,7 @@
             <tr>
                 <td>@reminder.id</td>
                 <td>@reminder.what</td>
-                <td>@reminder.firstTime</td>
+                <td>@reminder.firstTime.toString(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss z"))</td>
                 <td>@reminder.repeat</td>
             </tr>
             }

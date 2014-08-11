@@ -7,7 +7,6 @@ import app.MyPostgresDriver.simple._
 
 import app.MyPostgresDriver.simple.Tag
 
-import scala.Some
 import models.Repeat.Frequency
 import helpers.ReminderParsing
 import helpers.TwitterApi.TwitterStatusAndJson
@@ -28,6 +27,7 @@ import helpers.TwitterApi.Status
 case class Reminder(id: Option[Long], userId: Long, twitterId: Long, createdAt: DateTime,
                     repeat: Frequency, firstTime: DateTime,
                     what: String, tweetId: Long) {
+
 
 
   def getScheduledReminders(implicit s: Session): List[ScheduledReminder] = {
