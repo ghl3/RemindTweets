@@ -16,6 +16,9 @@ case class User(id: Option[Long], screenName: String, createdAt: LocalDateTime) 
   def getScheduledReminders()(implicit s: Session): List[ScheduledReminder] = {
     ScheduledReminders.scheduledReminders.where(_.userId === id).list
   }
+
+  def this(screenName: String) = this(None, screenName, LocalDateTime.now())
+
 }
 
 

@@ -3,13 +3,14 @@ package controllers
 import play.api.Play
 import play.api.mvc._
 import helpers.TwitterApi
-import play.{Logger}
+import play.Logger
 
 
 // Based on:
 // https://github.com/yusuke/sign-in-with-twitter/blob/master/src/main/java/twitter4j/examples/signin/CallbackServlet.java
 
 object Authentication extends Controller {
+
 
   def twitterSignIn = Action { request =>
 
@@ -47,9 +48,8 @@ object Authentication extends Controller {
 
       Logger.info("Successfully logged in %s %s".format(access.getScreenName, access.getUserId))
 
-      Ok("Authenticated").withSession(
-        request.session + ("twitterScreenName" -> access.getScreenName)
-      )
+      Redirect(routes.Application.reminders())
+        .withSession(request.session + ("twitterScreenName" -> access.getScreenName))
     } else {
       Forbidden("Not verified")
     }

@@ -20,14 +20,14 @@ object RestUser extends Controller {
     if(!Authentication.isSignedIn(screenName, rs.session)) {
       Forbidden("Forbidden, yo")
     } else {
-      val user: Option[models.User] = Users.findByScreenName(screenName)
+      var user: Option[models.User] = Users.findByScreenName(screenName)
 
       if (user.isEmpty) {
-        NotFound("User with screen_name %s was not found".format(screenName))
-      } else {
-        val reminders = user.get.getReminders
-        Ok(views.html.userReminders(user.get, reminders))
+        user = Users.createWithScreenName(screenName)
       }
+
+      val reminders = user.get.getReminders
+      Ok(views.html.userReminders(user.get, reminders))
     }
   }
 
