@@ -3,7 +3,7 @@ package controllers
 import play.api.Play
 import play.api.mvc._
 import helpers.TwitterApi
-import play.{Logger}
+import play.Logger
 
 
 // Based on:

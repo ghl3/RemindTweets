@@ -6,7 +6,7 @@ import play.Logger
 import org.joda.time.DateTime
 import helpers.{ReminderParsing, TwitterApi}
 
-import TwitterApi.{Paging, Status}
+import helpers.TwitterApi.{TweetListener, Paging, Status, TwitterStatusAndJson}
 
 import play.api.Play.current
 import scala.concurrent.duration.Duration
@@ -19,13 +19,12 @@ import ExecutionContext.Implicits.global
 
 import play.api.libs.json.JsValue
 import models.{Tweets, Users, Reminders}
-import helpers.TwitterApi.TwitterStatusAndJson
 import play.api.db.slick.Session
 
 
 object ReminderListener {
 
-  def calculate(interval: FiniteDuration, nListeners: Integer) {
+  def beginListeningDiscreteIntervals(interval: FiniteDuration, nListeners: Integer) {
 
     // Create an Akka system
     val system = ActorSystem("MentionListener")
@@ -41,6 +40,52 @@ object ReminderListener {
       master,
       GetMentions(new DateTime()))
   }
+
+
+  def beginListeningStreaming(nParsers: Integer) {
+
+    // Create an Akka system
+    val system = ActorSystem("MentionListener")
+
+    val master = system.actorOf(Props(new ReminderParser), name="masterParsers")
+
+    val search = new twitter4j.FilterQuery().track(Array("@remindtweets"))
+    //val twitterStream = TwitterApi.getTwitterStream.getFilterStream(search)
+
+    //twitterStream
+    val twitterStream = TwitterApi.getTwitterStream
+
+    twitterStream.filter(search)
+
+    // Parse the status and send it to our handler actors
+
+    twitterStream.addListener(new TweetListener((status: Status) => {
+      println(status)
+      val mention = new TwitterStatusAndJson(status)
+      master ! ParseAndHandleMention(mention.status, mention.json)
+    }))
+
+
+    // sample() method internally creates a thread
+    // which manipulates TwitterStream
+    // and calls these adequate listener methods continuously.
+    //twitterStream.sample()
+
+/*
+    TwitterApi.
+
+    // Schedule a new batch to be run every 30 seconds
+    // The new batch is obtained from reminders scheduled for
+    // 30 seconds into the future until 60 seconds into the future
+    Akka.system().scheduler.schedule(
+      Duration.create(0, TimeUnit.MILLISECONDS),
+      interval,
+      master,
+      GetMentions(new DateTime()))
+      */
+  }
+
+
 }
 
 
@@ -79,6 +124,7 @@ class ReminderListener(nListeners: Integer) extends Actor {
 
 
 case class ParseAndHandleMention(mention: Status, json: JsValue)
+
 
 class ReminderParser extends Actor {
 

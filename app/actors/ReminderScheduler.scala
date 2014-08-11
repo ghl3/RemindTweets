@@ -6,7 +6,6 @@ import models.ScheduledReminders
 import play.Logger
 
 import play.libs.Akka
-import scala.concurrent
 import java.util.concurrent.TimeUnit
 
 import play.api.Play.current
@@ -18,7 +17,7 @@ import ExecutionContext.Implicits.global
 
 object ReminderScheduler {
 
-  def calculate(interval: concurrent.duration.FiniteDuration, nTweeters: Integer) {
+  def beginScheduler(interval: concurrent.duration.FiniteDuration, nTweeters: Integer) {
 
     // Create an Akka system
     val system = ActorSystem("ReminderScheduler")
