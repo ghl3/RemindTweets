@@ -98,9 +98,13 @@ object ReminderParser {
     Logger.info("Handling mention: {} for user {}", mention, user)
 
     val tweet = Tweets.fromStatusAndJson(user.get, mention, json)
-    val parsed = ReminderParsing.parseStatusText(mention.getText)
 
-    Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
-
+    try {
+      val parsed = ReminderParsing.parseStatusText(mention.getText)
+      Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
+    } catch {
+      case e: Exception =>
+        Logger.error("Failed to parse mention {} and json {} from user {}", mention, json, user)
+    }
   }
 }

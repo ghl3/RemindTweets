@@ -84,7 +84,7 @@ class TestMentionParsing extends JUnitSuite {
   @Test def parsingC() {
     val mention = "@remindtweets Remind me to build this app on Wednesday at 6:00PM every week"
     val parsed = ReminderParsing.parseStatusText(mention)
-    assert(parsed.isParsedSuccessfully)
+    assert(parsed.isParsedSuccessfully, "Should be parsed successfully")
 
     parsed match {
       case ReminderParsing.Success(what, firstTime, repeat) =>
@@ -96,6 +96,21 @@ class TestMentionParsing extends JUnitSuite {
           assertTime = assertTime.plusWeeks(1)
         }
         assert(firstTime === assertTime)
+      case _ => assert(false, "Not parsed successfully")
+    }
+  }
+
+
+  @Test def parsingD() {
+    val mention = "@remindtweets Remind me to once again see if this is working tomorrow at 5"
+    val parsed = ReminderParsing.parseStatusText(mention)
+    assert(parsed.isParsedSuccessfully)
+
+    parsed match {
+      case ReminderParsing.Success(what, firstTime, repeat) =>
+        assert(repeat === Repeat.Never)
+        assert(what === "once again see if this is working tomorrow")
+        assert(firstTime === DateTime.now().plusDays(1).withTime(5,0,0,0))
       case _ => assert(false)
     }
   }
