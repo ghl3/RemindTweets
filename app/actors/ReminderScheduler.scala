@@ -52,8 +52,7 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
   override def receive: Receive = {
 
     case Schedule(min, max) =>
-      play.api.db.slick.DB.withSession {
-        implicit session =>
+      play.api.db.slick.DB.withSession { implicit session =>
 
           val minDateTime = time.DateTime.now().plus(min)
           val maxDateTime = time.DateTime.now().plus(max)
@@ -88,8 +87,7 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
       }
 
     case ReminderFailure(scheduledReminderId) =>
-      play.api.db.slick.DB.withSession {
-        implicit session =>
+      play.api.db.slick.DB.withSession { implicit session =>
           val scheduledReminder = ScheduledReminders.findById(scheduledReminderId)
           if (scheduledReminder.isDefined) {
             ScheduledReminders.insert(scheduledReminder.get.setFailed())

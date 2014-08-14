@@ -103,7 +103,7 @@ object Reminders {
 
         Logger.info("Found reminder in tweet: %s %s %s".format(what, time, repeat))
 
-        val savedTweet  = Tweets.insertIfUniqueTweetAndGet(tweet)
+        val savedTweet = Tweets.insertIfUniqueTweetAndGet(tweet)
         val createdReminder = Reminders.createFromTweetIfUnique(user, savedTweet, ReminderParsing.Success(what, time, repeat))
 
         createdReminder match {
