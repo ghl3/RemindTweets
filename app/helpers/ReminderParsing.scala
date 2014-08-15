@@ -1,7 +1,7 @@
 package helpers
 
 import models.Repeat
-import org.joda.time.{DateTimeConstants, LocalDate, LocalTime, DateTime}
+import org.joda.time._
 import models.Repeat.Frequency
 import scala.util.matching.Regex
 import play.Logger
@@ -100,6 +100,7 @@ object ReminderParsing {
     val repeat = getRepeatFrequency(groupMap.get("repeat"))
     val parsedTime = parseReminderTime(groupMap.get("time"), groupMap.get("when"))
 
+
     parsedTime match {
       case Some(time) => ReminderParsing.Success(what.get, time, repeat)
       case None =>
@@ -188,14 +189,16 @@ object ReminderParsing {
     val timeOfDay: LocalTime = try {
       parseTwelveHour(timeString).get
     } catch {
-      case e: Exception => DateTime.now().toLocalTime
+      case e: Exception => DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles")).toLocalTime
     }
 
     // Then, parse the date
     val date: LocalDate = parseDate(dateString)
 
-    date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour,
-      timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
+    date.toDateTime(timeOfDay, DateTimeZone.forID("America/Los_Angeles"))
+
+    //date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour,
+    //  timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
   }
 
 
@@ -228,11 +231,13 @@ object ReminderParsing {
 
     val time: LocalTime = parseTwelveHour(timeString).get
 
-    val timeAtToday = setTime(DateTime.now(), time)
+    // For now, interpret all time zones as LA
+    val timeAtToday = setTime(DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles")), time)
+
     if (timeAtToday.isAfter(DateTime.now())) {
       timeAtToday
     } else {
-      setTime(DateTime.now().plusDays(1), time)
+      setTime(DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")), time)
     }
   }
 

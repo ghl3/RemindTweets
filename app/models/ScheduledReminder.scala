@@ -59,7 +59,6 @@ class ScheduledReminders(tag: Tag) extends Table[ScheduledReminder](tag, "schedu
   def inProgress = column[Boolean]("in_progress")
   def failed = column[Boolean]("failed")
 
-
   def * = (id.?, reminderId, userId, time, executed, cancelled, inProgress, failed) <> (ScheduledReminder.tupled, ScheduledReminder.unapply)
 
   // Create a foreign key relationship on reminders

@@ -1,7 +1,7 @@
 import helpers.ReminderParsing
 import models.Repeat
 
-import org.joda.time.{DateTime, LocalTime}
+import org.joda.time.{DateTimeZone, DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
 
@@ -28,7 +28,7 @@ class TestMentionParsing extends JUnitSuite {
     val reminderTime = ReminderParsing.parseReminderTime("5:00 PM")
     assert(reminderTime.isDefined)
 
-    val todayAtFive = DateTime.now()
+    val todayAtFive = DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles"))
       .withHourOfDay(17)
       .withMinuteOfHour(0)
       .withSecondOfMinute(0).withMillisOfSecond(0)
@@ -76,7 +76,7 @@ class TestMentionParsing extends JUnitSuite {
       case ReminderParsing.Success(what, firstTime, repeat) =>
         assert(repeat === Repeat.Never)
         assert(what === "build this app")
-        assert(firstTime === DateTime.now().plusDays(1).withTime(0,1,0,0))
+        assert(firstTime === DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(0,1,0,0))
       case _ => assert(false)
     }
   }
@@ -91,7 +91,7 @@ class TestMentionParsing extends JUnitSuite {
         assert(repeat === Repeat.Weekly)
         assert(what === "build this app")
 
-        var assertTime = DateTime.now().withDayOfWeek(3).withTime(18,0,0,0)
+        var assertTime = DateTime.now().withDayOfWeek(3).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(18,0,0,0)
         if (assertTime.isBefore(DateTime.now())) {
           assertTime = assertTime.plusWeeks(1)
         }
@@ -110,7 +110,7 @@ class TestMentionParsing extends JUnitSuite {
       case ReminderParsing.Success(what, firstTime, repeat) =>
         assert(repeat === Repeat.Never)
         assert(what === "once again see if this is working tomorrow")
-        assert(firstTime === DateTime.now().plusDays(1).withTime(5,0,0,0))
+        assert(firstTime === DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(5,0,0,0))
       case _ => assert(false)
     }
   }
