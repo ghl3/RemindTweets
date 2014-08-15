@@ -60,32 +60,37 @@ object ReminderParsing {
    * @param text The tweet content to match
    * @return
    */
-  def parseStatusText(text: String): ReminderParsing.Parsed = {
+  def parseStatusTextWithoutValidation(text: String): ReminderParsing.Parsed = {
 
     Logger.info("Checking text: {}", text)
 
-    //val parsed = parseTypeA(text)
+    patternA.findFirstMatchIn(text) match {
+      case Some(result) => return parseTypeA(convertRegexToGroupMap(result))
+      case None => println("Didn't match type A")
+    }
 
-    //val parsed = List(parseTypeA(text))
-    // .find(_ != Failure)
-    //  .flatten
+
+    patternB.findFirstMatchIn(text) match {
+      case Some(result) => return parseTypeB(convertRegexToGroupMap(result))
+      case None => println("Didn't match type B")
+    }
+
+    println("No matching patterns found")
+    Failure
+  }
 
 
-    val parsed = parseTypeA(text)
-
-    parsed match {
-      case Failure => Failure
+  def parseStatusText(text: String) = {
+    parseStatusTextWithoutValidation(text) match {
       case s: Success =>
         if (s.firstTime.isAfter(DateTime.now())) {
           s
         } else {
           ReminderParsing.DateTooEarly
         }
+      case x => x
     }
   }
-
-
-  //case class ReminderToken(what: String, when: String, repeat: String,
 
 
   // Example
@@ -94,16 +99,7 @@ object ReminderParsing {
   val patternA = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
-  def parseTypeA(text: String): ReminderParsing.Parsed = {
-
-    val result = patternA.findFirstMatchIn(text)
-    if(result.isEmpty) {
-      Logger.info("Didn't match pattern: {}", text)
-      return Failure
-    }
-
-    Logger.info("Found match pattern: {}", text)
-    val groupMap = convertRegexToGroupMap(result.get)
+  def parseTypeA(groupMap: Map[String,String]): ReminderParsing.Parsed = {
 
     val what = groupMap.get("what")
     if (what.isEmpty) {
@@ -121,23 +117,13 @@ object ReminderParsing {
     }
   }
 
-
   // Example
   // Remind me to WHAT Tomorrow at 6:00pms every week.
 
   val patternB = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s*(at (.+?)?)?$",
     "to", "what", "when", "at", "time")
 
-  def parseTypeB(text: String): ReminderParsing.Parsed = {
-
-    val result = patternB.findFirstMatchIn(text)
-    if(result.isEmpty) {
-      Logger.info("Didn't match pattern: {}", text)
-      return Failure
-    }
-
-    Logger.info("Found match pattern: {}", text)
-    val groupMap = convertRegexToGroupMap(result.get)
+  def parseTypeB(groupMap: Map[String,String]): ReminderParsing.Parsed = {
 
     val what = groupMap.get("what")
     if (what.isEmpty) {
@@ -214,7 +200,6 @@ object ReminderParsing {
   }
 
 
-
   def parseRelativeTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
     if (time.isDefined && when.isDefined) {
       Some(parseTimeAndDate(time.get, when.get))
@@ -249,16 +234,16 @@ object ReminderParsing {
 
 
   def parseDate(dateString: String): LocalDate = {
-    dateString match {
-      case "Today" => LocalDate.now()
-      case "Tomorrow" => LocalDate.now().plusDays(1)
-      case "Monday" => getNextDayOfWeek(DateTimeConstants.MONDAY)
-      case "Tuesday" => getNextDayOfWeek(DateTimeConstants.TUESDAY)
-      case "Wednesday" => getNextDayOfWeek(DateTimeConstants.WEDNESDAY)
-      case "Thursday" => getNextDayOfWeek(DateTimeConstants.THURSDAY)
-      case "Friday" => getNextDayOfWeek(DateTimeConstants.FRIDAY)
-      case "Saturday" => getNextDayOfWeek(DateTimeConstants.SATURDAY)
-      case "Sunday" => getNextDayOfWeek(DateTimeConstants.SUNDAY)
+    dateString.toUpperCase match {
+      case "TODAY" => LocalDate.now()
+      case "TOMORROW" => LocalDate.now().plusDays(1)
+      case "MONDAY" => getNextDayOfWeek(DateTimeConstants.MONDAY)
+      case "TUESDAY" => getNextDayOfWeek(DateTimeConstants.TUESDAY)
+      case "WEDNESDAY" => getNextDayOfWeek(DateTimeConstants.WEDNESDAY)
+      case "THURSDAY" => getNextDayOfWeek(DateTimeConstants.THURSDAY)
+      case "FRIDAY" => getNextDayOfWeek(DateTimeConstants.FRIDAY)
+      case "SATURDAY" => getNextDayOfWeek(DateTimeConstants.SATURDAY)
+      case "SUNDAY" => getNextDayOfWeek(DateTimeConstants.SUNDAY)
       case _ => LocalDate.now()
     }
   }
