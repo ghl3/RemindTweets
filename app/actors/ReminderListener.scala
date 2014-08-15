@@ -67,7 +67,6 @@ object ReminderListener {
     for (mention: TwitterStatusAndJson <- mentions) yield ParseAndHandleMention(mention.status, mention.json)
   }
 
-
 }
 
 

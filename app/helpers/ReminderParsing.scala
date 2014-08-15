@@ -51,31 +51,61 @@ object ReminderParsing {
     }
   }
 
+
   /**
-   *
    * The main method that converts a tweet into the
    * logical contents of a reminder
    * Return None if the parsing fails or if the tweet
    * doesn't match the structure of an acceptable reminder
-   * @param text
+   * @param text The tweet content to match
    * @return
    */
   def parseStatusText(text: String): ReminderParsing.Parsed = {
 
     Logger.info("Checking text: {}", text)
 
-    val result = getResultOfReminderRegex(text)
+    //val parsed = parseTypeA(text)
+
+    //val parsed = List(parseTypeA(text))
+    // .find(_ != Failure)
+    //  .flatten
+
+
+    val parsed = parseTypeA(text)
+
+    parsed match {
+      case Failure => Failure
+      case s: Success =>
+        if (s.firstTime.isAfter(DateTime.now())) {
+          s
+        } else {
+          ReminderParsing.DateTooEarly
+        }
+    }
+  }
+
+
+  //case class ReminderToken(what: String, when: String, repeat: String,
+
+
+  // Example
+  // Remind me to WHAT on Tuesday at 6:00pms every week.
+
+  val patternA = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
+    "to", "what", "on", "when", "at", "time", "every", "repeat")
+
+  def parseTypeA(text: String): ReminderParsing.Parsed = {
+
+    val result = patternA.findFirstMatchIn(text)
     if(result.isEmpty) {
       Logger.info("Didn't match pattern: {}", text)
-      return ReminderParsing.Failure
+      return Failure
     }
 
     Logger.info("Found match pattern: {}", text)
-
     val groupMap = convertRegexToGroupMap(result.get)
 
     val what = groupMap.get("what")
-
     if (what.isEmpty) {
       return ReminderParsing.NoWhat
     }
@@ -84,15 +114,44 @@ object ReminderParsing {
     val parsedTime = parseReminderTime(groupMap.get("time"), groupMap.get("when"))
 
     parsedTime match {
+      case Some(time) => ReminderParsing.Success(what.get, time, repeat)
       case None =>
         Logger.error("Failed to parse time {}", groupMap("time"))
         ReminderParsing.Failure
-      case Some(time) =>
-        if (time.isAfter(DateTime.now())) {
-          ReminderParsing.Success(what.get, time, repeat)
-        } else {
-          ReminderParsing.DateTooEarly
-        }
+    }
+  }
+
+
+  // Example
+  // Remind me to WHAT Tomorrow at 6:00pms every week.
+
+  val patternB = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s*(at (.+?)?)?$",
+    "to", "what", "when", "at", "time")
+
+  def parseTypeB(text: String): ReminderParsing.Parsed = {
+
+    val result = patternB.findFirstMatchIn(text)
+    if(result.isEmpty) {
+      Logger.info("Didn't match pattern: {}", text)
+      return Failure
+    }
+
+    Logger.info("Found match pattern: {}", text)
+    val groupMap = convertRegexToGroupMap(result.get)
+
+    val what = groupMap.get("what")
+    if (what.isEmpty) {
+      return ReminderParsing.NoWhat
+    }
+
+    val repeat = Repeat.Never
+    val parsedTime = parseRelativeTime(groupMap.get("time"), groupMap.get("when"))
+
+    parsedTime match {
+      case Some(time) => ReminderParsing.Success(what.get, time, repeat)
+      case None =>
+        Logger.error("Failed to parse time {}", groupMap("time"))
+        ReminderParsing.Failure
     }
   }
 
@@ -140,6 +199,23 @@ object ReminderParsing {
 
 
   def parseReminderTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
+    if (time.isDefined && when.isDefined) {
+      Some(parseTimeAndDate(time.get, when.get))
+    }
+    else if (time.isDefined) {
+      Some(parseTimeTodayOrTomorrow(time.get))
+    }
+    else if (when.isDefined) {
+      Some(parseDate(when.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
+    }
+    else {
+      None
+    }
+  }
+
+
+
+  def parseRelativeTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
     if (time.isDefined && when.isDefined) {
       Some(parseTimeAndDate(time.get, when.get))
     }
