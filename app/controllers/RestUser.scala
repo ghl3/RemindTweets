@@ -20,14 +20,17 @@ object RestUser extends Controller {
     if(!Authentication.isSignedIn(screenName, rs.session)) {
       Forbidden("Forbidden, yo")
     } else {
-      var user: Option[models.User] = Users.findByScreenName(screenName)
 
-      if (user.isEmpty) {
-        user = Users.createWithScreenName(screenName)
+      // Get an option with the first value or an empty option
+      val userOpt: Option[User] = List(Users.findByScreenName(screenName), Users.createWithScreenName(screenName))
+        .find(_.nonEmpty).flatten
+
+      userOpt match {
+        case Some(user) =>
+          val reminders = user.getReminders
+          Ok(views.html.userReminders(user, reminders))
+        case None => InternalServerError
       }
-
-      val reminders = user.get.getReminders
-      Ok(views.html.userReminders(user.get, reminders))
     }
   }
 
