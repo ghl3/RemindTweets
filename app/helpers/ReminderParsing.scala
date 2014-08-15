@@ -24,9 +24,6 @@ object ReminderParsing {
   case object InvalidDate extends Parsed
   case object NoWhat extends Parsed
 
-  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
-    "to", "what", "on", "when", "at", "time", "every", "repeat")
-
 
   def getResultOfReminderRegex(text: String): Option[Regex.Match] = {
     pattern.findFirstMatchIn(text)
@@ -64,19 +61,13 @@ object ReminderParsing {
 
     Logger.info("Checking text: {}", text)
 
-    patternA.findFirstMatchIn(text) match {
-      case Some(result) => return parseTypeA(convertRegexToGroupMap(result))
-      case None => println("Didn't match type A")
+    pattern.findFirstMatchIn(text) match {
+      case Some(result) =>
+        parseData(convertRegexToGroupMap(result))
+      case None =>
+        println("No matching patterns found")
+        Failure
     }
-
-
-    patternB.findFirstMatchIn(text) match {
-      case Some(result) => return parseTypeB(convertRegexToGroupMap(result))
-      case None => println("Didn't match type B")
-    }
-
-    println("No matching patterns found")
-    Failure
   }
 
 
@@ -96,10 +87,10 @@ object ReminderParsing {
   // Example
   // Remind me to WHAT on Tuesday at 6:00pms every week.
 
-  val patternA = new Regex("(?i)@RemindTweets Remind Me (to)? (.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
+  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
-  def parseTypeA(groupMap: Map[String,String]): ReminderParsing.Parsed = {
+  def parseData(groupMap: Map[String,String]): ReminderParsing.Parsed = {
 
     val what = groupMap.get("what")
     if (what.isEmpty) {
@@ -116,31 +107,6 @@ object ReminderParsing {
         ReminderParsing.Failure
     }
   }
-
-  // Example
-  // Remind me to WHAT Tomorrow at 6:00pms every week.
-
-  val patternB = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s*(at (.+?)?)?$",
-    "to", "what", "when", "at", "time")
-
-  def parseTypeB(groupMap: Map[String,String]): ReminderParsing.Parsed = {
-
-    val what = groupMap.get("what")
-    if (what.isEmpty) {
-      return ReminderParsing.NoWhat
-    }
-
-    val repeat = Repeat.Never
-    val parsedTime = parseRelativeTime(groupMap.get("time"), groupMap.get("when"))
-
-    parsedTime match {
-      case Some(time) => ReminderParsing.Success(what.get, time, repeat)
-      case None =>
-        Logger.error("Failed to parse time {}", groupMap("time"))
-        ReminderParsing.Failure
-    }
-  }
-
 
   def getRepeatFrequency(repeat: Option[String]): Frequency = {
 
