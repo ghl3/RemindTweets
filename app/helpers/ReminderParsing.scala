@@ -245,6 +245,10 @@ object ReminderParsing {
     Logger.info("Parsing Time: {}", time)
 
     try {
+      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH:mm")))
+    } catch { case e: java.lang.IllegalArgumentException => }
+
+    try {
       return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mm aa")))
     } catch { case e: java.lang.IllegalArgumentException => }
 
@@ -254,6 +258,10 @@ object ReminderParsing {
 
     try {
       return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh")))
+    } catch { case e: java.lang.IllegalArgumentException => }
+
+    try {
+      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH")))
     } catch { case e: java.lang.IllegalArgumentException => }
 
     None
