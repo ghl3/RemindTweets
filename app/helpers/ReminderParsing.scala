@@ -43,7 +43,6 @@ object ReminderParsing {
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
 
-
   /**
    * Takes a string status text and parses it into a map
    * of data that can be used to create a reminder, or
@@ -55,12 +54,12 @@ object ReminderParsing {
    */
   def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
 
+    // Go most specific to least specific
 
     patternB.findFirstMatchIn(text) match {
       case Some(group) => return Some(convertRegexToGroupMap(group))
       case None => Logger.debug("Text {} does not match pattern B", text)
     }
-
 
     pattern.findFirstMatchIn(text) match {
       case Some(group) => return Some(convertRegexToGroupMap(group))
@@ -87,7 +86,6 @@ object ReminderParsing {
     }
 
     val repeat = getRepeatFrequency(groupMap.get("repeat"))
-
 
     val firstTime = if (groupMap.contains("relativeTime")) {
       parseRelativeTime(groupMap.get("relativeTime"), createdAt)
@@ -144,8 +142,8 @@ object ReminderParsing {
       return Repeat.Never
     }
 
+    // TODO: Fill this out
     val freq = repeat.get
-
     val weekly = """(?i).*week.*""".r
 
     freq match {
@@ -206,6 +204,7 @@ object ReminderParsing {
 
   def createDuration(duration: String) = {
     Logger.error("Relative time not yet supported: {}", duration)
+    // TODO: Fill this out
     new Duration
   }
 
