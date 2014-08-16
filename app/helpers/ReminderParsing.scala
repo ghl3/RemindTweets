@@ -32,15 +32,17 @@ object ReminderParsing {
   }
 
 
+  // Relative Time Non Recurring
+  // Example: Remind me to eat lunch in 4 hours.
+  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)$",
+    "to", "what", "in", "relativeTime")
+
   // Absolute Time With recurring
   // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
   val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
-  // Relative Time Non Recurring
-  // Example: Remind me to eat lunch in 4 hours.
-  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)$",
-    "to", "what", "in", "relativeTime")
+
 
   /**
    * Takes a string status text and parses it into a map
@@ -53,14 +55,16 @@ object ReminderParsing {
    */
   def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
 
-    pattern.findFirstMatchIn(text) match {
-      case Some(group) => return Some(convertRegexToGroupMap(group))
-      case None => Logger.debug("Text {} does not match pattern A", text)
-    }
 
     patternB.findFirstMatchIn(text) match {
       case Some(group) => return Some(convertRegexToGroupMap(group))
       case None => Logger.debug("Text {} does not match pattern B", text)
+    }
+
+
+    pattern.findFirstMatchIn(text) match {
+      case Some(group) => return Some(convertRegexToGroupMap(group))
+      case None => Logger.debug("Text {} does not match pattern A", text)
     }
 
     None

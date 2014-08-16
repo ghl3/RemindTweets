@@ -1,10 +1,8 @@
 import helpers.ReminderParsing
-import models.Repeat
 
 import org.joda.time.{DateTimeZone, DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
-import play.Logger
 
 
 class TestMentionParsing extends JUnitSuite {
@@ -61,8 +59,9 @@ class TestMentionParsing extends JUnitSuite {
 
     parsed match {
       case Some(data) =>
+
         assert(!data.contains("repeat"))
-        assert(data("what") === "once again see if this is working tomorrow")
+        assert(data("what") === "eat lunch")
         assert(data("relativeTime") === "4 hours")
 
       case _ => assert(false)
