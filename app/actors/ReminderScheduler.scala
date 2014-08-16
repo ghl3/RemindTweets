@@ -2,6 +2,8 @@ package actors
 
 import akka.actor._
 import akka.routing.RoundRobinRouter
+import com.sun.tools.internal.ws.resources.WsdlMessages
+import helpers.TwitterApi
 import models.ScheduledReminders
 import play.Logger
 
@@ -114,6 +116,8 @@ class TweetSender extends Actor {
       try {
         Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
         sender ! ReminderSuccess(scheduledReminderId)
+
+        TwitterApi.sendTweetToUser(screenName, content)
 
         val status: String = "%s %s".format(screenName, content)
         Logger.info("Sent tweet '{}'", status)
