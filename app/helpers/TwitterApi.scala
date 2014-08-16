@@ -1,6 +1,5 @@
 package helpers
 
-import play.api.Play
 import twitter4j._
 
 import twitter4j.conf.Configuration
@@ -9,7 +8,9 @@ import play.api.libs.json.JsValue
 import scala.collection.JavaConverters._
 import twitter4j.auth.RequestToken
 
+import play.api.Play.current
 import play.Logger
+
 
 object TwitterApi {
 
@@ -33,7 +34,7 @@ object TwitterApi {
   def sendTweetToUser(screenName: String, content: String) = {
     val status = "%s %s".format(screenName, content)
 
-    if (Play.configuration.getBoolean("sendTweets").getOrElse(false)) {
+    if (play.api.Play.configuration.getBoolean("sendTweets").getOrElse(false)) {
       TwitterApiInternal.updateStatus(status)
     } else {
       Logger.info("Mock Sending Tweet: {}", status);
