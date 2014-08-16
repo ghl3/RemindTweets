@@ -24,6 +24,9 @@ object ReminderScheduler {
 
     val master = system.actorOf(Props(new ReminderScheduler(nTweeters)), name="masterScheduler")
 
+    val minOffset = org.joda.time.Duration.millis(interval.toMillis / 2)
+    val maxOffset = org.joda.time.Duration.millis(interval.toMillis * 2)
+
     // Schedule a new batch to be run every 30 seconds
     // The new batch is obtained from reminders scheduled for
     // 30 seconds into the future until 60 seconds into the future
@@ -31,7 +34,7 @@ object ReminderScheduler {
       concurrent.duration.Duration.create(0, TimeUnit.MILLISECONDS),
       interval,
       master,
-      Schedule(time.Duration.standardSeconds(30), time.Duration.standardSeconds(60)))
+      Schedule(minOffset, maxOffset))
   }
 }
 
@@ -73,6 +76,9 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
             context.system.scheduler.scheduleOnce(concurrentDuration) {
               workerRouter ! TweetRequest(scheduledReminder.id.get, user.screenName, reminder.what)
             }
+
+            // Mark it as in progress so it doesn't get double scheduled
+            ScheduledReminders.update(scheduledReminder.setInProgress(progress=true))
           }
       }
 
@@ -80,7 +86,7 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
       play.api.db.slick.DB.withSession { implicit session =>
           val scheduledReminder = ScheduledReminders.findById(scheduledReminderId)
           if (scheduledReminder.isDefined) {
-            ScheduledReminders.insert(scheduledReminder.get.setExecuted())
+            ScheduledReminders.update(scheduledReminder.get.setExecuted())
           } else {
             Logger.error("Could not find scheduled reminder with id: %s" format scheduledReminderId)
           }
@@ -106,12 +112,11 @@ class TweetSender extends Actor {
   override def receive = {
     case TweetRequest(scheduledReminderId, screenName, content) =>
       try {
-
         Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
+        sender ! ReminderSuccess(scheduledReminderId)
 
         val status: String = "%s %s".format(screenName, content)
-        Logger.info("Sending tweet '{}'", status)
-        sender ! ReminderSuccess(scheduledReminderId)
+        Logger.info("Sent tweet '{}'", status)
       } catch {
         case e: Exception => sender ! ReminderFailure(scheduledReminderId)
       }

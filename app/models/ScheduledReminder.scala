@@ -91,6 +91,10 @@ object ScheduledReminders {
     scheduledReminders.where(_.id === id).update(reminderToUpdate)
   }
 
+  def update(scheduledReminder: ScheduledReminder)(implicit s: Session) = {
+    scheduledReminders.where(_.id === scheduledReminder.id.get).update(scheduledReminder)
+  }
+
   def delete(id: Long)(implicit s: Session) = {
     scheduledReminders.where(_.id === id).delete
   }

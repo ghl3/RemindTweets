@@ -4,6 +4,7 @@ import models.Repeat
 import org.joda.time.{DateTimeZone, DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
 import org.junit.Test
+import play.Logger
 
 
 class TestMentionParsing extends JUnitSuite {
@@ -110,7 +111,10 @@ class TestMentionParsing extends JUnitSuite {
       case ReminderParsing.Success(what, firstTime, repeat) =>
         assert(repeat === Repeat.Never)
         assert(what === "once again see if this is working tomorrow")
-        assert(firstTime === DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(5,0,0,0))
+
+        val targetTime = DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(5,0,0,0)
+        Logger.info("Parsed time: {} Target Time: {}", firstTime, targetTime);
+        assert(firstTime === targetTime)
       case _ => assert(false)
     }
   }

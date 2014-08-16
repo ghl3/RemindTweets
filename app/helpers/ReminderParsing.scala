@@ -11,6 +11,8 @@ import org.joda.time.format.DateTimeFormat
 
 object ReminderParsing {
 
+  val timeZone = DateTimeZone.forID("America/Los_Angeles")
+
   sealed abstract class Parsed {
     def isParsedSuccessfully = false
   }
@@ -189,13 +191,13 @@ object ReminderParsing {
     val timeOfDay: LocalTime = try {
       parseTwelveHour(timeString).get
     } catch {
-      case e: Exception => DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles")).toLocalTime
+      case e: Exception => DateTime.now().withZone(timeZone).toLocalTime
     }
 
     // Then, parse the date
     val date: LocalDate = parseDate(dateString)
 
-    date.toDateTime(timeOfDay, DateTimeZone.forID("America/Los_Angeles"))
+    date.toDateTime(timeOfDay, timeZone)
 
     //date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour,
     //  timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
@@ -232,12 +234,12 @@ object ReminderParsing {
     val time: LocalTime = parseTwelveHour(timeString).get
 
     // For now, interpret all time zones as LA
-    val timeAtToday = setTime(DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles")), time)
+    val timeAtToday = setTime(DateTime.now().withZone(timeZone), time)
 
     if (timeAtToday.isAfter(DateTime.now())) {
       timeAtToday
     } else {
-      setTime(DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")), time)
+      setTime(DateTime.now().plusDays(1).withZone(timeZone), time)
     }
   }
 
