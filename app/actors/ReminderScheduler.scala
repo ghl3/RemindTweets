@@ -2,7 +2,6 @@ package actors
 
 import akka.actor._
 import akka.routing.RoundRobinRouter
-import com.sun.tools.internal.ws.resources.WsdlMessages
 import helpers.TwitterApi
 import models.ScheduledReminders
 import play.Logger
