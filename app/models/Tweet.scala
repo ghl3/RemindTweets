@@ -60,6 +60,10 @@ object Tweets {
     tweets.where(_.twitterId === twitterId).firstOption
   }
 
+  def findByUserId(userId: Long)(implicit s: Session) = {
+    tweets.where(_.userId === userId).list
+  }
+
   def insert(tweet: Tweet)(implicit s: Session) {
     tweets.insert(tweet)
   }

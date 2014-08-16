@@ -86,6 +86,10 @@ object ScheduledReminders {
     scheduledReminder.copy(id = Some(userId))
   }
 
+  def findByUserId(userId: Long)(implicit s: Session) = {
+    scheduledReminders.where(_.userId === userId).list
+  }
+
   def update(id: Long, scheduledReminder: ScheduledReminder)(implicit s: Session) = {
     val reminderToUpdate: ScheduledReminder = scheduledReminder.copy(Some(id))
     scheduledReminders.where(_.id === id).update(reminderToUpdate)

@@ -86,5 +86,34 @@ object Users {
       case None => createWithScreenName(screenName)
     }
   }
+
+  def clearUserIfExists(screenName: String)(implicit session: Session) = {
+
+    Users.findByScreenName(screenName) match {
+      case Some(user) =>
+
+        for (scheduledReminder <- ScheduledReminders.findByUserId(user.id.get)) {
+          ScheduledReminders.delete(scheduledReminder.id.get)
+        }
+
+        for (reminder <- Reminders.findByUserId(user.id.get)) {
+          Reminders.delete(reminder.id.get)
+        }
+
+        for (tweet <- Tweets.findByUserId(user.id.get)) {
+          Tweets.delete(tweet.id.get)
+        }
+
+        Users.delete(user.id.get)
+
+      case None => Unit
+    }
+  }
+
+  def clearAndCreateFreshUser(screenName: String)(implicit session: Session) = {
+    Users.clearUserIfExists(screenName)
+    Users.insertAndGet(User(None, "TestUser", LocalDateTime.now()))
+  }
+
 }
 

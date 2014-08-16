@@ -97,6 +97,11 @@ object Reminders {
     reminders.where(_.id === id).delete
   }
 
+
+  def findByUserId(userId: Long)(implicit s: Session) = {
+    reminders.where(_.userId === userId).list
+  }
+
   def createAndSaveIfReminder(user: models.User, tweet: models.Tweet, parsed: ReminderParsing.Parsed) (implicit s: Session): Option[Reminder] = {
     parsed match {
       case ReminderParsing.Success(what, time, repeat) =>
