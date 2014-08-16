@@ -27,26 +27,75 @@ object ReminderParsing {
   case object NoWhat extends Parsed
 
 
-  def getResultOfReminderRegex(text: String): Option[Regex.Match] = {
-    pattern.findFirstMatchIn(text)
-  }
-
   def convertRegexToGroupMap(matched: Regex.Match): Map[String,String] = {
     (for ((name, group) <- matched.groupNames zip matched.subgroups if group != null) yield name -> group).toMap
   }
 
+
+  // Absolute Time With recurring
+  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
+    "to", "what", "on", "when", "at", "time", "every", "repeat")
+
+  // Relative Time Non Recurring
+  // Example: Remind me to eat lunch in 4 hours.
+  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)$",
+    "to", "what", "in", "relativeTime")
+
   /**
-   * Return a map representing the matched groups of the regex or,
-   * if the input regex doesn't match, return an empty map
+   * Takes a string status text and parses it into a map
+   * of data that can be used to create a reminder, or
+   * return None if not matching parse can be made.
+   * No validation on the data is made, this only
+   * matches the strings against acceptable patterns
    * @param text
    * @return
    */
-  def getStructuredReminderResult(text: String): Map[String,String] = {
-    val result = getResultOfReminderRegex(text)
-    if (result.isDefined) {
-      convertRegexToGroupMap(result.get)
+  def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
+
+    pattern.findFirstMatchIn(text) match {
+      case Some(group) => return Some(convertRegexToGroupMap(group))
+      case None => Logger.debug("Text {} does not match pattern A", text)
+    }
+
+    patternB.findFirstMatchIn(text) match {
+      case Some(group) => return Some(convertRegexToGroupMap(group))
+      case None => Logger.debug("Text {} does not match pattern B", text)
+    }
+
+    None
+  }
+
+
+  /**
+   * Takes a map of data from parsing a tweet
+   * and converts it into a valid reminder,
+   * returning errors for invalid data
+   * @param groupMap
+   * @param createdAt
+   * @return
+   */
+  def parseReminderDataIntoReminder(groupMap: Map[String,String], createdAt: DateTime): ReminderParsing.Parsed = {
+
+    val what = groupMap.get("what")
+    if (what.isEmpty) {
+      return ReminderParsing.NoWhat
+    }
+
+    val repeat = getRepeatFrequency(groupMap.get("repeat"))
+
+
+    val firstTime = if (groupMap.contains("relativeTime")) {
+      parseRelativeTime(groupMap.get("relativeTime"), createdAt)
     } else {
-      Map[String,String]()
+      parseAbsoluteTime(groupMap.get("time"), groupMap.get("when"))
+    }
+
+    firstTime match {
+      case Some(time) => ReminderParsing.Success(what.get, time, repeat)
+      case None =>
+        Logger.error("Failed to parse time {}", groupMap("time"))
+        ReminderParsing.Failure
     }
   }
 
@@ -55,17 +104,20 @@ object ReminderParsing {
    * The main method that converts a tweet into the
    * logical contents of a reminder
    * Return None if the parsing fails or if the tweet
-   * doesn't match the structure of an acceptable reminder
+   * doesn't match the structure of an acceptable reminder.
+   * A creation time must be included to properly handle relative
+   * reminder times ie "in 4 hours".
    * @param text The tweet content to match
+   * @param time The time the reminder was created.
    * @return
    */
-  def parseStatusTextWithoutValidation(text: String): ReminderParsing.Parsed = {
+  def parseStatusTextWithoutValidation(text: String, time: DateTime) = {
 
-    Logger.info("Checking text: {}", text)
+    Logger.info("Checking text: {} at created time {}", text, time)
 
-    pattern.findFirstMatchIn(text) match {
+    parseStatusTextIntoReminderData(text) match {
       case Some(result) =>
-        parseData(convertRegexToGroupMap(result))
+        parseReminderDataIntoReminder(result, time)
       case None =>
         println("No matching patterns found")
         Failure
@@ -73,43 +125,14 @@ object ReminderParsing {
   }
 
 
-  def parseStatusText(text: String) = {
-    parseStatusTextWithoutValidation(text) match {
-      case s: Success =>
-        if (s.firstTime.isAfter(DateTime.now())) {
-          s
-        } else {
-          ReminderParsing.DateTooEarly
-        }
+  def createReminderFromTextAndTime(text: String, time: DateTime) = {
+    parseStatusTextWithoutValidation(text, time) match {
+      case s: Success if s.firstTime.isAfter(time) => s
+      case s: Success if s.firstTime.isBefore(time) => ReminderParsing.DateTooEarly
       case x => x
     }
   }
 
-
-  // Example
-  // Remind me to WHAT on Tuesday at 6:00pms every week.
-
-  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
-    "to", "what", "on", "when", "at", "time", "every", "repeat")
-
-  def parseData(groupMap: Map[String,String]): ReminderParsing.Parsed = {
-
-    val what = groupMap.get("what")
-    if (what.isEmpty) {
-      return ReminderParsing.NoWhat
-    }
-
-    val repeat = getRepeatFrequency(groupMap.get("repeat"))
-    val parsedTime = parseReminderTime(groupMap.get("time"), groupMap.get("when"))
-
-
-    parsedTime match {
-      case Some(time) => ReminderParsing.Success(what.get, time, repeat)
-      case None =>
-        Logger.error("Failed to parse time {}", groupMap("time"))
-        ReminderParsing.Failure
-    }
-  }
 
   def getRepeatFrequency(repeat: Option[String]): Frequency = {
 
@@ -153,19 +176,33 @@ object ReminderParsing {
   }
 
 
-  def parseReminderTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
-    if (time.isDefined && when.isDefined) {
-      Some(parseTimeAndDate(time.get, when.get))
+  def parseAbsoluteTime(time: Option[String], date: Option[String]) : Option[DateTime] = {
+    if (time.isDefined && date.isDefined) {
+      Some(parseTimeAndDate(time.get, date.get))
     }
     else if (time.isDefined) {
       Some(parseTimeTodayOrTomorrow(time.get))
     }
-    else if (when.isDefined) {
-      Some(parseDate(when.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
+    else if (date.isDefined) {
+      Some(parseDate(date.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
     }
     else {
       None
     }
+  }
+
+
+  def parseRelativeTime(time: Option[String], createdAt: DateTime): Option[DateTime] = {
+    time match {
+      case Some(durationString) => Some(createdAt.plus(createDuration(durationString)))
+      case None => None
+    }
+  }
+
+
+  def createDuration(duration: String) = {
+    Logger.error("Relative time not yet supported: {}", duration)
+    new Duration
   }
 
 

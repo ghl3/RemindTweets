@@ -1,6 +1,7 @@
 package actors
 
 import akka.actor._
+import org.joda.time.DateTime
 import play.Logger
 import helpers.{ReminderParsing, TwitterApi}
 
@@ -99,7 +100,7 @@ object ReminderParser {
     val tweet = Tweets.fromStatusAndJson(user.get, mention, json)
 
     try {
-      val parsed = ReminderParsing.parseStatusText(mention.getText)
+      val parsed = ReminderParsing.createReminderFromTextAndTime(mention.getText, new DateTime(mention.getCreatedAt))
       Reminders.createAndSaveIfReminder(user.get, tweet, parsed)
     } catch {
       case e: Exception =>

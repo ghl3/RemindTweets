@@ -41,7 +41,7 @@ class TestMentionParsing extends JUnitSuite {
 
   @Test def structuredReminderA() {
     val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM every week"
-    val structured = ReminderParsing.getStructuredReminderResult(mention)
+    val structured = ReminderParsing.parseStatusTextIntoReminderData(mention).get
 
     assert(structured("what") == "build this app")
     assert(structured("every") == "every week")
@@ -55,69 +55,17 @@ class TestMentionParsing extends JUnitSuite {
 
 
   @Test def parsingA() {
-    val mention = "@remindtweets Remind me to build this app on Tomorrow at 6:00 PM"
-    val parsed = ReminderParsing.parseStatusText(mention)
-    assert(parsed.isParsedSuccessfully)
+    val mention = "@RemindTweets Remind me to eat lunch in 4 hours"
+    val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
+    assert(parsed.isDefined)
 
     parsed match {
-      case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === Repeat.Never)
-        assert(what === "build this app")
-        assert(firstTime === DateTime.now().plusDays(1).withTime(18,0,0,0))
+      case Some(data) =>
+        assert(!data.contains("repeat"))
+        assert(data("what") === "once again see if this is working tomorrow")
+        assert(data("relativeTime") === "4 hours")
+
       case _ => assert(false)
     }
   }
-
-  @Test def parsingB() {
-    val mention = "@remindtweets Remind me to build this app at 12:01 AM"
-    val parsed = ReminderParsing.parseStatusText(mention)
-    assert(parsed.isParsedSuccessfully)
-
-    parsed match {
-      case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === Repeat.Never)
-        assert(what === "build this app")
-        assert(firstTime === DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(0,1,0,0))
-      case _ => assert(false)
-    }
-  }
-
-  @Test def parsingC() {
-    val mention = "@remindtweets Remind me to build this app on Wednesday at 6:00PM every week"
-    val parsed = ReminderParsing.parseStatusText(mention)
-    assert(parsed.isParsedSuccessfully, "Should be parsed successfully")
-
-    parsed match {
-      case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === Repeat.Weekly)
-        assert(what === "build this app")
-
-        var assertTime = DateTime.now().withDayOfWeek(3).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(18,0,0,0)
-        if (assertTime.isBefore(DateTime.now())) {
-          assertTime = assertTime.plusWeeks(1)
-        }
-        assert(firstTime === assertTime)
-      case _ => assert(false, "Not parsed successfully")
-    }
-  }
-
-
-  @Test def parsingD() {
-    val mention = "@remindtweets Remind me to once again see if this is working tomorrow at 5"
-    val parsed = ReminderParsing.parseStatusText(mention)
-    assert(parsed.isParsedSuccessfully)
-
-    parsed match {
-      case ReminderParsing.Success(what, firstTime, repeat) =>
-        assert(repeat === Repeat.Never)
-        assert(what === "once again see if this is working tomorrow")
-
-        val targetTime = DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(5,0,0,0)
-        Logger.info("Parsed time: {} Target Time: {}", firstTime, targetTime);
-        assert(firstTime === targetTime)
-      case _ => assert(false)
-    }
-  }
-
-
 }

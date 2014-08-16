@@ -125,7 +125,7 @@ object Reminders {
   def createRemindersFromUserTwitterStatuses(user: models.User, statuses: Iterable[TwitterStatusAndJson])(implicit s: Session): Iterable[Reminder] = {
     (for (status <- statuses) yield {
       val tweet = Tweets.fromStatusAndJson(user, status.status, status.json)
-      val parsed =  ReminderParsing.parseStatusText(status.status.getText)
+      val parsed =  ReminderParsing.createReminderFromTextAndTime(status.status.getText, new DateTime(tweet.getStatus.getCreatedAt))
       createAndSaveIfReminder(user, tweet, parsed)
     }).flatten
   }
@@ -171,10 +171,7 @@ object Reminders {
    * @return
    */
   def isReminder(status: Status): Boolean = {
-    ReminderParsing.parseStatusText(status.getText) match {
-      case ReminderParsing.Success(_,_,_) => true
-      case _ => false
-    }
+    ReminderParsing.parseStatusTextIntoReminderData(status.getText).isDefined
   }
 
 
@@ -183,6 +180,7 @@ object Reminders {
    * @param tweet
    * @return
    */
+  /*
   def createReminder(tweet: models.Tweet): Option[Reminder] = {
 
     val parsed = ReminderParsing.parseStatusText(tweet.getStatus.getText)
@@ -193,9 +191,9 @@ object Reminders {
       case _ => None
     }
   }
-
+*/
   def getRemidersFromTweets(tweets: Iterable[Tweet]) = {
-    tweets.map(tweet => ReminderParsing.parseStatusText(tweet.getStatus.getText)).filter {
+    tweets.map(tweet => ReminderParsing.createReminderFromTextAndTime(tweet.getStatus.getText, new DateTime(tweet.getStatus.getCreatedAt))).filter {
       case ReminderParsing.Success(_, _, _) => true
       case _ => false
     }
