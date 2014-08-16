@@ -28,7 +28,6 @@ object Authentication extends Controller {
     Logger.info("%s %s %s %s %s".format(url, token, tokenSecret, oauth_token, oauth_verifier))
 
     Redirect(requestToken.getAuthenticationURL).withSession(
-      //request.session + ("requestToken" -> requestToken.getToken)
       "requestToken" -> token, "requestTokenSecret" -> tokenSecret
     )
   }
@@ -72,48 +71,5 @@ object Authentication extends Controller {
 https://github.com/playframework/play-slick/issues/81
 http://stackoverflow.com/questions/19780545/play-slick-with-securesocial-running-db-io-in-a-separate-thread-pool
  */
-
-
-/*
-  def TwitterSignIn = {
-    Ok("Sign in")
-  }
-
-  def AuthenticateMe(screenName: String) = Action { implicit request =>
-    if(!Authentication.isSignedIn(screenName, request.session)) {
-      Forbidden("Forbidden, yo")
-    } else {
-      Results.Redirect(routes.Authentication.twitterSignIn)
-    }
-  }
-*/
-
-/*
-  class TwitterAuthenticatedRequest[A](val screenName: String, request: Request[A]) extends WrappedRequest[A](request)
-
-  object TwitterAuthenticated extends ActionBuilder[TwitterAuthenticatedRequest] {
-    def invokeBlock[A](request: Request[A], block: (TwitterAuthenticatedRequest[A]) => Future[SimpleResult]) = {
-      request.session.get("twitterScreenName").map { screenName =>
-        block(new TwitterAuthenticatedRequest(screenName, request))
-      } getOrElse {
-        Future.successful(Forbidden)
-      }
-    }
-  }
-
-  trait Secured {
-    private def username(request: RequestHeader) = request.session.get(Security.username)
-
-    private def onUnauthorized(request: RequestHeader) = {
-      Results.Redirect("/").flashing("error" -> "You need to login first.")
-    }
-
-    def IsAuthenticated(f: => String => DBSessionRequest[_] => SimpleResult) =
-      Security.Authenticated(username, onUnauthorized) {
-        user => DBAction(rs => f(user)(rs))
-      }
-  }
-*/
-
 
 }

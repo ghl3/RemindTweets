@@ -199,8 +199,6 @@ object ReminderParsing {
 
     date.toDateTime(timeOfDay, timeZone)
 
-    //date.toDateTimeAtStartOfDay.withTime(timeOfDay.getHourOfDay, timeOfDay.getMinuteOfHour,
-    //  timeOfDay.getSecondOfMinute, timeOfDay.getMillisOfSecond)
   }
 
 
