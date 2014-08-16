@@ -1,2 +1,2 @@
-web: target/universal/stage/bin/remindtweets -Dhttp.port=${PORT} -Dconfig.resource=prod.conf -DapplyEvolutions.default=true
+web: target/universal/stage/bin/remindtweets -Dhttp.port=${PORT} -Dconfig.resource=web.conf -DapplyEvolutions.default=true
 worker: target/universal/stage/bin/remindtweets -Dhttp.port=${PORT} -Dconfig.resource=worker.conf
