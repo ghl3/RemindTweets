@@ -8,30 +8,8 @@ import org.junit.Test
 import org.scalatest.junit.JUnitSuite
 
 
-//import com.github.tototoshi.slick.converter._
-
-//import org.joda.time._
-
-//import com.github.tminglei.slickpg.
-
-
 class TestTimeZones extends JUnitSuite {
 
-
-  @Test
-  def testFormatting() = {
-
-    val testTimeZone = DateTimeZone.forID("America/New_York")
-    val createdAt = DateTime.now().withZone(testTimeZone)
-
-    val tzDateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSSZ")
-
-    val timeString = createdAt.toString(tzDateTimeFormatter)
-
-    println("Time: ", timeString)
-    assert(timeString.equals("2014-08-16 19:09:25.155000-0400"))
-
-  }
 
   @Test
   def timeOfdayParsing() = {
