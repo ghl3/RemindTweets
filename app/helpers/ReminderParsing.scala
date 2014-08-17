@@ -34,13 +34,26 @@ object ReminderParsing {
 
   // Relative Time Non Recurring
   // Example: Remind me to eat lunch in 4 hours.
-  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)\\.?$",
+  val patternA = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(in)\\s+(.+?)\\.?$",
     "to", "what", "in", "relativeTime")
+
 
   // Absolute Time With recurring
   // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
-  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?\\.?$",
+  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s*(at\\s+(.+?))\\s*(every\\s+(.+?))\\.?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
+
+
+  // Absolute Time With recurring
+  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  val patternC = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s+(at\\s+(.+?))\\s*\\.?$",
+    "to", "what", "on", "when", "at", "time")
+
+
+  // Absolute Time With recurring
+  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  val patternD = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(at\\s+(.+?)?)\\s*\\.?$",
+    "to", "what", "at", "time")
 
 
   /**
@@ -55,15 +68,14 @@ object ReminderParsing {
   def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
 
     // Go most specific to least specific
-
-    patternB.findFirstMatchIn(text) match {
-      case Some(group) => return Some(convertRegexToGroupMap(group))
-      case None => Logger.debug("Text {} does not match pattern B", text)
-    }
-
-    pattern.findFirstMatchIn(text) match {
-      case Some(group) => return Some(convertRegexToGroupMap(group))
-      case None => Logger.debug("Text {} does not match pattern A", text)
+    for (pattern <- List(patternA, patternB, patternC, patternD)) {
+      pattern.findFirstMatchIn(text) match {
+        case Some(group) =>
+          Logger.debug("Text {} matches pattern: {}", text, pattern)
+          return Some(convertRegexToGroupMap(group))
+        case None =>
+          Logger.debug("Text {} does not match pattern: {}", text, pattern)
+      }
     }
 
     None

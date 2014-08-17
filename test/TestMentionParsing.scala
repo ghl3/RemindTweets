@@ -7,7 +7,8 @@ import org.junit.Test
 
 class TestMentionParsing extends JUnitSuite {
 
-  @Test def timeOfdayParsing() {
+  @Test
+  def timeOfdayParsing() {
 
     var timeOfday: Option[LocalTime] = None
 
@@ -22,7 +23,8 @@ class TestMentionParsing extends JUnitSuite {
   }
 
 
-  @Test def timeParsing() {
+  @Test
+  def timeParsing() {
 
     val reminderTime = ReminderParsing.parseReminderTime("5:00 PM")
     assert(reminderTime.isDefined)
@@ -84,6 +86,26 @@ class TestMentionParsing extends JUnitSuite {
       case _ => assert(false)
     }
   }
+
+
+
+  @Test def parsingC() {
+    val mention = " @remindtweets Remind me to get chips at the store at 6:15pm."
+    val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
+    assert(parsed.isDefined, "Didn't parse successfully")
+
+    parsed match {
+      case Some(data) =>
+
+        assert(!data.contains("repeat"))
+        assert(data("what") === "get chips at the store")
+        assert(data("time") === "6:15pm")
+
+      case _ => assert(false)
+    }
+  }
+
+
 
 
 
