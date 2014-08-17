@@ -32,12 +32,17 @@ object TwitterApi {
   }
 
   def sendTweetToUser(screenName: String, content: String) = {
-    val status = "%s %s".format(screenName, content)
+    val status = "@%s %s".format(screenName, content)
 
     if (play.api.Play.configuration.getBoolean("sendTweets").getOrElse(false)) {
-      TwitterApiInternal.updateStatus(status)
+      try {
+        val tweet = TwitterApiInternal.updateStatus(status)
+        Logger.info("Successfully sent Tweet: {} - {}", status, tweet)
+      } catch {
+        case te: TwitterException => Logger.error("Failed to send status: {}", status, te)
+      }
     } else {
-      Logger.info("Mock Sending Tweet: {}", status);
+      Logger.info("Mock Sending Tweet: {}", status)
     }
   }
 
@@ -163,7 +168,7 @@ object TwitterApi {
     }
 
 
-    def updateStatus(text: String) {
+    def updateStatus(text: String): Status = {
       getTwitter.updateStatus(text)
     }
 

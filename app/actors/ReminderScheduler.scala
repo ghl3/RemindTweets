@@ -64,7 +64,8 @@ class ReminderScheduler(nTweeters: Integer) extends Actor {
 
           val scheduledReminders = ScheduledReminders.getRemindersToSchedule(minDateTime, maxDateTime)
 
-          Logger.debug("Found %s scheduled reminders to handle now".format(scheduledReminders.size))
+          Logger.debug("Found {} scheduled reminders to handle between {} and {}",
+            scheduledReminders.size: Integer, minDateTime, maxDateTime)
 
           for {scheduledReminder <- scheduledReminders
                reminder <- scheduledReminder.getReminder
@@ -114,12 +115,12 @@ class TweetSender extends Actor {
     case TweetRequest(scheduledReminderId, screenName, content) =>
       try {
         Logger.debug("Received Tweet to send: %s %s %s".format(scheduledReminderId, screenName, content))
-        sender ! ReminderSuccess(scheduledReminderId)
-
         TwitterApi.sendTweetToUser(screenName, content)
 
         val status: String = "%s %s".format(screenName, content)
         Logger.info("Sent tweet '{}'", status)
+
+        sender ! ReminderSuccess(scheduledReminderId)
       } catch {
         case e: Exception => sender ! ReminderFailure(scheduledReminderId)
       }
