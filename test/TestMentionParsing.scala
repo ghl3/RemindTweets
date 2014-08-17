@@ -54,6 +54,23 @@ class TestMentionParsing extends JUnitSuite {
   }
 
 
+
+  def assertParsedProperly(mention: String, expectedValues: Map[String,String]) = {
+
+    val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
+    assert(parsed.isDefined)
+
+    parsed match {
+      case Some(data) =>
+        for ((key, value) <- expectedValues) {
+          assert(data.contains(key) === true)
+          assert(data.get(key) === value)
+        }
+      case _ => assert(false, "Reminder not parsed")
+    }
+  }
+
+
   @Test def parsingA() {
     val mention = "@RemindTweets Remind me to eat lunch in 4 hours"
     val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
@@ -88,7 +105,6 @@ class TestMentionParsing extends JUnitSuite {
   }
 
 
-
   @Test def parsingC() {
     val mention = " @remindtweets Remind me to get chips at the store at 6:15pm."
     val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
@@ -104,9 +120,4 @@ class TestMentionParsing extends JUnitSuite {
       case _ => assert(false)
     }
   }
-
-
-
-
-
 }

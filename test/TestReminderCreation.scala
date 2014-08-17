@@ -8,52 +8,9 @@ import play.Logger
 
 class TestReminderCreation extends JUnitSuite {
 
-  @Test def timeOfdayParsing() {
-
-    var timeOfday: Option[LocalTime] = None
-
-    timeOfday = ReminderParsing.parseTwelveHour("5:00 PM")
-    assert(timeOfday.isDefined)
-    assert(timeOfday.get == new LocalTime(17,0,0))
-
-    timeOfday = ReminderParsing.parseTwelveHour("5:00PM")
-    assert(timeOfday.isDefined)
-    assert(timeOfday.get == new LocalTime(17,0,0))
-
-  }
 
 
-  @Test def timeParsing() {
-
-    val reminderTime = ReminderParsing.parseReminderTime("5:00 PM")
-    assert(reminderTime.isDefined)
-
-    val todayAtFive = DateTime.now().withZone(DateTimeZone.forID("America/Los_Angeles"))
-      .withHourOfDay(17)
-      .withMinuteOfHour(0)
-      .withSecondOfMinute(0).withMillisOfSecond(0)
-
-    assert(todayAtFive === reminderTime.get)
-
-  }
-
-
-  @Test def structuredReminderA() {
-    val mention = "@remindtweets Remind me to build this app on Wednesday at 5:00PM every week"
-    val structured = ReminderParsing.parseStatusTextIntoReminderData(mention).get
-
-    assert(structured("what") == "build this app")
-    assert(structured("every") == "every week")
-    assert(structured("to") == "to")
-    assert(structured("at") == "at 5:00PM")
-    assert(structured("on") == "on Wednesday")
-    assert(structured("time") == "5:00PM")
-    assert(structured("repeat") == "week")
-    assert(structured("when") == "Wednesday")
-  }
-
-
-  @Test def parsingA() {
+  @Test def createA() {
     val mention = "@remindtweets Remind me to build this app on Tomorrow at 6:00 PM"
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
     assert(parsed.isParsedSuccessfully)
@@ -67,7 +24,7 @@ class TestReminderCreation extends JUnitSuite {
     }
   }
 
-  @Test def parsingB() {
+  @Test def createB() {
     val mention = "@remindtweets Remind me to build this app at 12:01 AM"
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
     assert(parsed.isParsedSuccessfully)
@@ -81,7 +38,7 @@ class TestReminderCreation extends JUnitSuite {
     }
   }
 
-  @Test def parsingC() {
+  @Test def createC() {
     val mention = "@remindtweets Remind me to build this app on Wednesday at 6:00PM every week"
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
     assert(parsed.isParsedSuccessfully, "Should be parsed successfully")
@@ -101,7 +58,7 @@ class TestReminderCreation extends JUnitSuite {
   }
 
 
-  @Test def parsingD() {
+  @Test def createD() {
     val mention = "@remindtweets Remind me to once again see if this is working tomorrow at 5"
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
     assert(parsed.isParsedSuccessfully)
