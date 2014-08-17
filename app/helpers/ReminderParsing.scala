@@ -26,32 +26,27 @@ object ReminderParsing {
   case object InvalidDate extends Parsed
   case object NoWhat extends Parsed
 
-
   def convertRegexToGroupMap(matched: Regex.Match): Map[String,String] = {
     (for ((name, group) <- matched.groupNames zip matched.subgroups if group != null) yield name -> group).toMap
   }
 
-
   // Relative Time Non Recurring
-  // Example: Remind me to eat lunch in 4 hours.
+  // Example: Remind me to WHAT in 4 hours.
   val patternA = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(in)\\s+(.+?)\\.?$",
     "to", "what", "in", "relativeTime")
 
-
   // Absolute Time With recurring
-  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  // Example: "Remind me to WHAT on Tuesday at 6:00pm every week."
   val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s*(at\\s+(.+?))\\s*(every\\s+(.+?))\\.?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
-
   // Absolute Time With recurring
-  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  // Example: "Remind me to WHAT on Tuesday at 6:00pm."
   val patternC = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s+(at\\s+(.+?))\\s*\\.?$",
     "to", "what", "on", "when", "at", "time")
 
-
   // Absolute Time With recurring
-  // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
+  // Example: "Remind me to WHAT on Tuesday at 6:00pm."
   val patternD = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(at\\s+(.+?)?)\\s*\\.?$",
     "to", "what", "at", "time")
 
@@ -67,8 +62,10 @@ object ReminderParsing {
    */
   def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
 
+    val patterns = List(patternA, patternB, patternC, patternD)
+
     // Go most specific to least specific
-    for (pattern <- List(patternA, patternB, patternC, patternD)) {
+    for (pattern <- patterns) {
       pattern.findFirstMatchIn(text) match {
         case Some(group) =>
           Logger.debug("Text {} matches pattern: {}", text, pattern)
@@ -154,16 +151,24 @@ object ReminderParsing {
       return Repeat.Never
     }
 
-    // TODO: Fill this out
     val freq = repeat.get
+
+    val daily = """(?i).*day.*""".r
     val weekly = """(?i).*week.*""".r
+    val monthly = """(?i).*month.*""".r
+    val hourly = """(?i).*hour.*""".r
 
     freq match {
+      case daily() => Repeat.Daily
       case weekly() => Repeat.Weekly
-      case _ => try {
-        Repeat.withName(freq)
-      } catch {case e: InvocationTargetException => Repeat.Never
-      }
+      case monthly() => Repeat.Monthly
+      case hourly() => Repeat.EveryHour
+      case _ =>
+        try {
+          Repeat.withName(freq)
+        } catch {
+          case e: InvocationTargetException => Repeat.Never
+        }
     }
   }
 

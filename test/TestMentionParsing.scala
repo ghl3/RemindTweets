@@ -1,4 +1,5 @@
 import helpers.ReminderParsing
+import models.Repeat
 
 import org.joda.time.{DateTimeZone, DateTime, LocalTime}
 import org.scalatest.junit.JUnitSuite
@@ -120,6 +121,21 @@ class TestMentionParsing extends JUnitSuite {
 
     val data = Map("what"->"build this app", "time"->"6:00PM", "when"->"Wednesday", "repeat"->"week")
     assertParsedProperly(mention, data)
+  }
+
+
+  @Test def parseRepeat() {
+
+    val repeatTest = Map(
+      "week"->Repeat.Weekly,
+      "monthly"->Repeat.Monthly,
+      "day"->Repeat.Daily,
+      "hour"->Repeat.EveryHour)
+
+    for ((key, value) <- repeatTest) {
+      val x = ReminderParsing.getRepeatFrequency(Some(key))
+      assert(x === value)
+    }
   }
 
 }

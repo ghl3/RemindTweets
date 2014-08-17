@@ -1,8 +1,6 @@
 
-
 import helpers.Converters
 import models._
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTimeZone, LocalDateTime, DateTime}
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
@@ -17,7 +15,6 @@ class TestTimeZones extends JUnitSuite {
     lazy val database = helpers.Database.getDatabase()
 
     val user = database.withSession { implicit session =>
-      //Database.clearAndCreateFreshUser("TestUser")
       Users.clearUserIfExists("TestUser")
       Users.insertAndGet(User(None, "TestUser", LocalDateTime.now()))
     }
