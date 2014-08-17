@@ -8,6 +8,7 @@ import play.Logger
 import java.lang.reflect.InvocationTargetException
 import org.joda.time.format.DateTimeFormat
 
+import com.joestelmach.natty.Parser
 
 object ReminderParsing {
 
@@ -211,15 +212,59 @@ object ReminderParsing {
   }
 
 
-  def parseRelativeTime(time: Option[String], createdAt: DateTime): Option[DateTime] = {
-    time match {
+  def parseRelativeTime(relativeTime: Option[String], createdAt: DateTime): Option[DateTime] = {
+    relativeTime match {
       case Some(durationString) => Some(createdAt.plus(createDuration(durationString)))
       case None => None
     }
   }
 
+  // Potential useful libraries:
+  // https://github.com/joestelmach/natty
+  // https://github.com/collegeman/stringtotime
 
-  def createDuration(duration: String) = {
+
+  /**
+   * Use the nice natty library to parse english strings into
+   * dates.  Unfortunately, it doesn't easily expose relative
+   * dates, only absolute ones.  It interprets relative ones
+   * as relative to now.  So, we subtract away relative ones
+   * to get the duration.  Somewhat hacky.
+   * @param duration
+   * @return
+   */
+  def getDateTimeFromDuration(duration: String): Option[Duration] = {
+    val parser = new com.joestelmach.natty.Parser()
+    val groups = parser.parse(duration)
+
+    if (groups.size == 0) {
+      None
+    } else {
+      val dates = groups.get(0).getDates
+
+      if (dates.size == 0) {
+        None
+      } else {
+        val pointInFuture = new DateTime(dates.get(0))
+        val duration = new Duration(DateTime.now, pointInFuture)
+        Some(duration)
+      }
+    }
+  }
+
+
+  def createDuration(duration: String): Duration = {
+
+    val matcher = new Regex("(?i).*(\\d+)\\s+(minute|hour|day|week|month).*",
+      "amount", "duration")
+
+    matcher.findFirstMatchIn(duration) match {
+      case Some(group) =>
+        convertRegexToGroupMap(group)
+    }
+
+
+
     Logger.error("Relative time not yet supported: {}", duration)
     // TODO: Fill this out
     new Duration

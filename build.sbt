@@ -33,4 +33,6 @@ libraryDependencies += "jp.t2v" %% "play2-auth-test" % "0.11.0" % "test"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
+libraryDependencies += "com.joestelmach" % "natty" % "0.8"
+
 play.Project.playScalaSettings
