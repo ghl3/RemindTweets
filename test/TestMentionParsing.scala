@@ -67,4 +67,24 @@ class TestMentionParsing extends JUnitSuite {
       case _ => assert(false)
     }
   }
+
+
+  @Test def parsingB() {
+    val mention = "@RemindTweets Remind me to get dinner at 5:40pm."
+    val parsed = ReminderParsing.parseStatusTextIntoReminderData(mention)
+    assert(parsed.isDefined, "Didn't parse successfully")
+
+    parsed match {
+      case Some(data) =>
+
+        assert(!data.contains("repeat"))
+        assert(data("what") === "get dinner")
+        assert(data("time") === "5:40pm")
+
+      case _ => assert(false)
+    }
+  }
+
+
+
 }

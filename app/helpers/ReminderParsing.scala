@@ -34,12 +34,12 @@ object ReminderParsing {
 
   // Relative Time Non Recurring
   // Example: Remind me to eat lunch in 4 hours.
-  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)$",
+  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to\\s+)?(.+?)\\s+(in)\\s+(.+)\\.?$",
     "to", "what", "in", "relativeTime")
 
   // Absolute Time With recurring
   // Example: "Remind me to WHAT on Tuesday at 6:00pms every week."
-  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?$",
+  val pattern = new Regex("(?i)@RemindTweets Remind Me (to)?\\s*(.+?)\\s*(on (.+?)?)?\\s*(at (.+?)?)?\\s*(every (.+?)?)?\\.?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
 
