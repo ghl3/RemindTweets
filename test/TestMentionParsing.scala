@@ -18,7 +18,7 @@ class TestMentionParsing extends JUnitSuite {
       case Some(data) =>
         for ((key, value) <- expectedValues) {
           assert(data.contains(key) === true)
-          assert(data(key) === value)
+          assert(data(key) === value, "(%s) should equal (%s)".format(data(key), value))
         }
         for (key <- notPresentKeys) {
           assert(data.contains(key) === false)
@@ -66,16 +66,36 @@ class TestMentionParsing extends JUnitSuite {
 
     val data = Map(
       "what"->"build this app",
-      "every"->"every week",
+      "every"->"every",
       "to"->"to",
-      "at"->"at 5:00PM",
-      "on"->"on Wednesday",
+      "at"->"at",
+      "time"->"5:00PM",
+      "on"->"on",
       "time"->"5:00PM",
       "repeat"->"week",
       "when"->"Wednesday")
 
     assertParsedProperly(mention, data)
   }
+
+
+  @Test def structuredReminderB() {
+    val mention = "@remindtweets  Remind  me  to  build \t this \t\t app  on   Wednesday  at  5:00PM   every  week   ."
+
+    val data = Map(
+      "what"->"build \t this \t\t app",
+      "every"->"every",
+      "to"->"to",
+      "at"->"at",
+      "time"->"5:00PM",
+      "on"->"on",
+      "time"->"5:00PM",
+      "repeat"->"week   ",
+      "when"->"Wednesday")
+
+    assertParsedProperly(mention, data)
+  }
+
 
 
   @Test def parsingA() {
@@ -129,6 +149,15 @@ class TestMentionParsing extends JUnitSuite {
     val mention = "@remindtweets Remind me to get dessert in 4 hours and 15 minutes"
 
     val data = Map("what"->"get dessert", "relativeTime"->"4 hours and 15 minutes")
+    assertParsedProperly(mention, data, List("repeat"))
+  }
+
+
+  @Test def parsingG() {
+
+  val mention = "@remindtweets Remind  me  to  get  dessert  in  three  hours  and  fifteen  minutes  and  twelve  seconds"
+
+    val data = Map("what"->"get  dessert", "relativeTime"->"three  hours  and  fifteen  minutes  and  twelve  seconds")
     assertParsedProperly(mention, data, List("repeat"))
   }
 

@@ -33,22 +33,22 @@ object ReminderParsing {
 
   // Relative Time Non Recurring
   // Example: Remind me (to) (WHAT) (in) (4 hours).
-  val patternA = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(in)\\s+(.+?)\\.?$",
+  val patternA = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(in)\\s+(.+?)\\.?$",
     "to", "what", "in", "relativeTime")
 
   // Absolute Time With recurring
   // Example: "Remind me (to) (WHAT) (on) (Tuesday) (at) (6:00pm) (every) (week)."
-  val patternB = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s*(at\\s+(.+?))\\s*(every\\s+(.+?))\\.?$",
+  val patternB = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s*(at)\\s+(.+?)\\s*(every)\\s+(.+?)\\.?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
   // Absolute Time With recurring
   // Example: "Remind me to (WHAT) (on) (Tuesday) (at) (6:00pm)."
-  val patternC = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(on\\s+(.+?))\\s+(at\\s+(.+?))\\s*\\.?$",
+  val patternC = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s+(at\\s+(.+?))\\s*\\.?$",
     "to", "what", "on", "when", "at", "time")
 
   // Absolute Time With recurring
   // Example: "Remind me to WHAT on Tuesday at 6:00pm."
-  val patternD = new Regex("(?i)@RemindTweets Remind Me\\s+(to)?\\s*(.+)\\s+(at\\s+(.+?)?)\\s*\\.?$",
+  val patternD = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+)\\s+(at)\\s+(.+?)\\s*\\.?$",
     "to", "what", "at", "time")
 
 
@@ -69,7 +69,7 @@ object ReminderParsing {
     for (pattern <- patterns) {
       pattern.findFirstMatchIn(text) match {
         case Some(group) =>
-          Logger.debug("Text {} matches pattern: {}", text, pattern)
+          Logger.debug("Mention {} matches pattern: {}", text, pattern)
           return Some(convertRegexToGroupMap(group))
         case None =>
           Logger.debug("Text {} does not match pattern: {}", text, pattern)
@@ -253,7 +253,7 @@ object ReminderParsing {
     }
   }
 
-
+/*
   def createDurationBad(duration: String): Duration = {
 
     val matcher = new Regex("(?i).*(\\d+)\\s+(minute|hour|day|week|month).*",
@@ -268,7 +268,7 @@ object ReminderParsing {
     // TODO: Fill this out
     new Duration
   }
-
+*/
 
   def parseRelativeTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
     if (time.isDefined && when.isDefined) {

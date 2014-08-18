@@ -4,6 +4,7 @@ import models.Repeat
 import org.joda.time._
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
+import play.Logger
 
 
 class TestReminderCreation extends JUnitSuite {
@@ -15,8 +16,8 @@ class TestReminderCreation extends JUnitSuite {
 
     parsed match {
       case ReminderParsing.Success(w, ft, r) =>
-        assert(r === repeat)
-        assert(w === what)
+        assert(r === repeat, "(%s) should equal (%s)".format(r, repeat))
+        assert(w === what, "(%s) should equal (%s)".format(w, what))
         assert(ft.withMillisOfSecond(0) === firstTime.withMillisOfSecond(0))
       case _ => assert(false)
     }
@@ -93,6 +94,16 @@ class TestReminderCreation extends JUnitSuite {
     testTweetCreation(mention,
       what="get dessert",
       firstTime=DateTime.now().plusDays(2).plusHours(50).plusSeconds(30).withZone(DateTimeZone.forID("America/Los_Angeles")),
+      repeat=Repeat.Never)
+  }
+
+
+  @Test def createG() {
+    val mention = "@remindtweets Remind  me  to  get  dessert  in  three  hours  and  fifteen  minutes  and  twelve  seconds"
+
+    testTweetCreation(mention,
+      what="get  dessert",
+      firstTime=DateTime.now().plusHours(3).plusMinutes(15).plusSeconds(12).withZone(DateTimeZone.forID("America/Los_Angeles")),
       repeat=Repeat.Never)
   }
 
