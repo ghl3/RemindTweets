@@ -124,6 +124,15 @@ class TestMentionParsing extends JUnitSuite {
   }
 
 
+  @Test def parsingF() {
+
+    val mention = "@remindtweets Remind me to get dessert in 4 hours and 15 minutes"
+
+    val data = Map("what"->"get dessert", "relativeTime"->"4 hours and 15 minutes")
+    assertParsedProperly(mention, data, List("repeat"))
+  }
+
+
   @Test def parseRepeat() {
 
     val repeatTest = Map(

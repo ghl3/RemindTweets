@@ -17,7 +17,7 @@ class TestReminderCreation extends JUnitSuite {
       case ReminderParsing.Success(w, ft, r) =>
         assert(r === repeat)
         assert(w === what)
-        assert(ft === firstTime)
+        assert(ft.withMillisOfSecond(0) === firstTime.withMillisOfSecond(0))
       case _ => assert(false)
     }
   }
@@ -75,4 +75,25 @@ class TestReminderCreation extends JUnitSuite {
       firstTime=DateTime.now().plusDays(1).withZone(DateTimeZone.forID("America/Los_Angeles")).withTime(5,0,0,0),
       repeat=Repeat.Never)
   }
+
+
+  @Test def createE() {
+    val mention = "@remindtweets Remind me to get dessert in 4 hours and 15 minutes"
+
+    testTweetCreation(mention,
+      what="get dessert",
+      firstTime=DateTime.now().plusHours(4).plusMinutes(15).withZone(DateTimeZone.forID("America/Los_Angeles")),
+      repeat=Repeat.Never)
+  }
+
+
+  @Test def createF() {
+    val mention = "@remindtweets Remind me to get dessert in 2 days and 50 hours and 30 seconds"
+
+    testTweetCreation(mention,
+      what="get dessert",
+      firstTime=DateTime.now().plusDays(2).plusHours(50).plusSeconds(30).withZone(DateTimeZone.forID("America/Los_Angeles")),
+      repeat=Repeat.Never)
+  }
+
 }
