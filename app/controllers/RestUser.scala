@@ -16,21 +16,56 @@ object RestUser extends Controller {
     Ok(views.html.user())
   }
 
+
   def userReminders(screenName: String) = DBAction { implicit rs =>
     if(!Authentication.isSignedIn(screenName, rs.session)) {
       Forbidden("Forbidden, yo")
     } else {
 
       // Get an option with the first value or an empty option
+      val userOpt = Users.getOrCreateUser(screenName)
+      /*
       val userOpt: Option[User] = List(Users.findByScreenName(screenName), Users.createWithScreenName(screenName))
         .find(_.nonEmpty).flatten
-
+*/
       userOpt match {
         case Some(user) =>
           val reminders = user.getReminders
           Ok(views.html.userReminders(user, reminders))
         case None => InternalServerError
       }
+    }
+  }
+
+
+  def userScheduledReminders(screenName: String) = DBAction { implicit rs =>
+
+    if (!Authentication.isSignedIn(screenName, rs.session)) {
+      Forbidden("Forbidden, yo")
+    } else {
+
+      val userOpt = Users.getOrCreateUser(screenName)
+
+      userOpt match {
+        case Some(user) =>
+          val scheduledReminders = user.getScheduledReminders
+
+          val remindersAndReminder = for (s <- scheduledReminders) yield (s, s.getReminder.get)
+
+          Ok(views.html.scheduledReminders(user, remindersAndReminder))
+        case None => InternalServerError
+      }
+
+      //val user: Option[models.User] = Users.findByScreenName(screenName)
+      /*
+      if (user.isEmpty) {
+        NotFound("User with screen_name %s was not found".format(screenName))
+      } else {
+        val scheduledReminders = user.get.getScheduledReminders
+        Ok(views.html.scheduledReminders(scheduledReminders))
+      }
+    }
+    */
     }
   }
 
@@ -52,23 +87,6 @@ object RestUser extends Controller {
     }
   }
 
-
-  def userScheduledReminders(screenName: String) = DBAction { implicit rs =>
-
-    if(!Authentication.isSignedIn(screenName, rs.session)) {
-      Forbidden("Forbidden, yo")
-    } else {
-
-      val user: Option[models.User] = Users.findByScreenName(screenName)
-
-      if (user.isEmpty) {
-        NotFound("User with screen_name %s was not found".format(screenName))
-      } else {
-        val scheduledReminders = user.get.getScheduledReminders
-        Ok(views.html.scheduledReminders(scheduledReminders))
-      }
-    }
-  }
 
 
   /**

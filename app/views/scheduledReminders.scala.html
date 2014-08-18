@@ -1,18 +1,45 @@
-@(reminders: List[ScheduledReminder])
+@(user: User, scheduledReminderPairs: List[Tuple2[ScheduledReminder, Reminder]])
 
-@import models._
+@import helpers._
+@import TwitterApi.{ResponseList,Status}
 
-@components.main("Todo list") {
+@import org.joda.time.format.DateTimeFormat
 
-<h1> There are @reminders.size task(s)</h1>
 
-<ul>
-    @reminders.map { reminder =>
-    <li>
-        @reminder.time
-    </li>
-    }
-</ul>
+@components.main("User") {
+
+<div class="container">
+
+    <h2 class="sub-header">Scheduled reminders for @user.screenName</h2>
+
+    <div class="table-responsive span8">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>What</th>
+                <th>When</th>
+                <th>Repeat</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            @scheduledReminderPairs.map { case (scheduledReminder, reminder) =>
+
+            <tr>
+                <td>@scheduledReminder.id</td>
+                <td>@reminder.what</td>
+                <td>@scheduledReminder.time.toString(DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss z"))</td>
+                <td>@reminder.repeat</td>
+                <td>@scheduledReminder.getStatus</td>
+            </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
 
 
 }

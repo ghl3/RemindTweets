@@ -87,6 +87,11 @@ object Users {
     }
   }
 
+  def findOrGetUser(screenName: String)(implicit s: Session) = {
+    val userOpt: Option[User] = List(Users.findByScreenName(screenName), Users.createWithScreenName(screenName))
+      .find(_.nonEmpty).flatten
+  }
+
   def clearUserIfExists(screenName: String)(implicit session: Session) = {
 
     Users.findByScreenName(screenName) match {
@@ -114,6 +119,7 @@ object Users {
     Users.clearUserIfExists(screenName)
     Users.insertAndGet(User(None, "TestUser", LocalDateTime.now()))
   }
+
 
 }
 

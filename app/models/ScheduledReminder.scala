@@ -45,6 +45,21 @@ case class ScheduledReminder(id: Option[Long], reminderId: Long, userId: Long, t
   def setFailed(failed: Boolean=true): ScheduledReminder = {
     this.copy(inProgress=false, executed=false, cancelled=false, failed=failed)
   }
+
+  def getStatus: String = {
+
+    if (executed) {
+      "Executed"
+    } else if(cancelled) {
+      "Cancelled"
+    } else if(failed) {
+      "Failed"
+    } else if(inProgress) {
+      "In Progress"
+    } else {
+      "Not Yet Sent"
+    }
+  }
 }
 
 
