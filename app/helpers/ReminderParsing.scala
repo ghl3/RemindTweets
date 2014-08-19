@@ -102,16 +102,7 @@ object ReminderParsing {
 
     val repeat = getRepeatFrequency(groupMap.get("repeat"))
 
-    val firstTime = if (groupMap.contains("relativeTime")) {
-      parseRelativeTime(groupMap.get("relativeTime"), createdAt)
-    } else if (groupMap.contains("when")) {
-      parseAbsoluteTime(groupMap.get("time"), groupMap.get("when"))
-    } else if (isDayOfWeek(groupMap.get("repeat"))) {
-      parseAbsoluteTime(groupMap.get("time"), groupMap.get("repeat"))
-    } else {
-      //parseReminderTime(groupMap.get("time").get)
-      parseNextTime(groupMap.get("time"))
-    }
+    val firstTime = determineFirstTime(groupMap, createdAt)
 
     firstTime match {
       case Some(time) => ReminderParsing.Success(what.get, time, repeat)
@@ -119,6 +110,34 @@ object ReminderParsing {
         Logger.error("Failed to parse time {}", groupMap("time"))
         ReminderParsing.Failure
     }
+  }
+
+
+  def determineFirstTime(groupMap: Map[String,String], createdAt: DateTime): Option[DateTime] = {
+
+    // "In 4 hours"
+    if (groupMap.contains("relativeTime")) {
+      return parseRelativeTime(groupMap.get("relativeTime"), createdAt)
+    }
+
+    // "On Tuesday at 6:00PM"
+    if (groupMap.contains("time") && groupMap.contains("when")) {
+      return parseAbsoluteTime(groupMap.get("time"), groupMap.get("when"))
+    }
+
+    // "every Tuesday"
+    if (groupMap.contains("time") && isDayOfWeek(groupMap.get("repeat"))) {
+      return parseAbsoluteTime(groupMap.get("time"), groupMap.get("repeat"))
+    }
+
+    // "at 5:00PM"
+    if (groupMap.contains("time")) {
+      return parseNextTime(groupMap.get("time"))
+    }
+
+    //parseReminderTime(groupMap.get("time").get)
+
+    None
   }
 
 
@@ -328,7 +347,13 @@ object ReminderParsing {
     val timeOfDay: LocalTime = try {
       parseTwelveHour(timeString).get
     } catch {
-      case e: Exception => DateTime.now().withZone(timeZone).toLocalTime
+      case e: Exception =>
+        getDateTimeFromDuration(timeString) match {
+          case Some(dateTime) => dateTime.toLocalTime
+          case None =>
+            Logger.error("Falling back to current time in 'parseTimeAndDate'")
+            DateTime.now().withZone(timeZone).toLocalTime
+        }
     }
 
     // Then, parse the date
