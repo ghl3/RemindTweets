@@ -12,7 +12,8 @@ class TestReminderCreation extends JUnitSuite {
 
   def testTweetCreation(mention: String, what: String, firstTime: DateTime, repeat: Repeat.Value) {
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
-    assert(parsed.isParsedSuccessfully)
+
+    assert(parsed.isParsedSuccessfully, "Should be parsed successfully")
 
     parsed match {
       case ReminderParsing.Success(w, ft, r) =>
@@ -105,6 +106,31 @@ class TestReminderCreation extends JUnitSuite {
       what="get  dessert",
       firstTime=DateTime.now().plusHours(3).plusMinutes(15).plusSeconds(12).withZone(DateTimeZone.forID("America/Los_Angeles")),
       repeat=Repeat.Never)
+  }
+
+
+  @Test def parsingH() {
+
+    val mention = "@remindtweets Remind me to go to sleep every day at midnight."
+
+    testTweetCreation(mention,
+      what="go to sleep",
+      firstTime=DateTime.now().plusDays(1).withTimeAtStartOfDay.withZone(DateTimeZone.forID("America/Los_Angeles")),
+      repeat=Repeat.Daily)
+  }
+
+
+  @Test def parsingI() {
+
+    val mention = "@remindtweets Remind me to eat my lunch every Tuesday at noon."
+
+    testTweetCreation(mention,
+      what="eat my lunch",
+      firstTime=getNextDayOfWeek(DateTimeConstants.TUESDAY)
+        .toDateTimeAtStartOfDay
+        .withHourOfDay(12)
+        .withZone(DateTimeZone.forID("America/Los_Angeles")),
+      repeat=Repeat.Weekly)
   }
 
 }

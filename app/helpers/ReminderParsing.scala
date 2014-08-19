@@ -38,17 +38,22 @@ object ReminderParsing {
 
   // Absolute Time With recurring
   // Example: "Remind me (to) (WHAT) (on) (Tuesday) (at) (6:00pm) (every) (week)."
-  val patternB = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s*(at)\\s+(.+?)\\s*(every)\\s+(.+?)\\.?$",
+  val patternB = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(every)\\s+(.+?)\\s+(at)\\s+(.+?)\\s*\\.?$",
+    "to", "what", "every", "repeat", "at", "time")
+
+  // Absolute Time With recurring
+  // Example: "Remind me (to) (WHAT) (on) (Tuesday) (at) (6:00pm) (every) (week)."
+  val patternC = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s*(at)\\s+(.+?)\\s*(every)\\s+(.+?)\\.?$",
     "to", "what", "on", "when", "at", "time", "every", "repeat")
 
   // Absolute Time With recurring
   // Example: "Remind me to (WHAT) (on) (Tuesday) (at) (6:00pm)."
-  val patternC = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s+(at\\s+(.+?))\\s*\\.?$",
+  val patternD = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+?)\\s+(on)\\s+(.+?)\\s+(at)\\s+(.+?)\\s*\\.?$",
     "to", "what", "on", "when", "at", "time")
 
   // Absolute Time With recurring
   // Example: "Remind me to WHAT on Tuesday at 6:00pm."
-  val patternD = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+)\\s+(at)\\s+(.+?)\\s*\\.?$",
+  val patternE = new Regex("(?i)@RemindTweets\\s+Remind\\s+Me\\s*(to)?\\s+(.+)\\s+(at)\\s+(.+?)\\s*\\.?$",
     "to", "what", "at", "time")
 
 
@@ -63,7 +68,7 @@ object ReminderParsing {
    */
   def parseStatusTextIntoReminderData(text: String): Option[Map[String,String]] = {
 
-    val patterns = List(patternA, patternB, patternC, patternD)
+    val patterns = List(patternA, patternB, patternC, patternD, patternE)
 
     // Go most specific to least specific
     for (pattern <- patterns) {
@@ -99,8 +104,13 @@ object ReminderParsing {
 
     val firstTime = if (groupMap.contains("relativeTime")) {
       parseRelativeTime(groupMap.get("relativeTime"), createdAt)
-    } else {
+    } else if (groupMap.contains("when")) {
       parseAbsoluteTime(groupMap.get("time"), groupMap.get("when"))
+    } else if (isDayOfWeek(groupMap.get("repeat"))) {
+      parseAbsoluteTime(groupMap.get("time"), groupMap.get("repeat"))
+    } else {
+      //parseReminderTime(groupMap.get("time").get)
+      parseNextTime(groupMap.get("time"))
     }
 
     firstTime match {
@@ -153,6 +163,11 @@ object ReminderParsing {
     }
 
     val freq = repeat.get
+
+
+    if (daysOfWeek.contains(freq.toUpperCase)) {
+      return Repeat.Weekly
+    }
 
     val daily = """(?i).*day.*""".r
     val weekly = """(?i).*week.*""".r
@@ -214,10 +229,33 @@ object ReminderParsing {
 
   def parseRelativeTime(relativeTime: Option[String], createdAt: DateTime): Option[DateTime] = {
     relativeTime match {
-      case Some(durationString) => Some(createdAt.plus(getDateTimeFromDuration(durationString).get : Duration))
+      case Some(durationString) => getDateTimeFromDuration(durationString)
       case None => None
     }
   }
+
+
+  def parseNextTime(relativeTime: Option[String]): Option[DateTime] = {
+    if (!relativeTime.isDefined) {
+      None
+    } else {
+
+      val time = getDateTimeFromDuration(relativeTime.get)
+
+      if (!time.isDefined) {
+        None
+      } else {
+
+        if (time.get.isBefore(DateTime.now())) {
+          Some(time.get.plusDays(1))
+        } else {
+          Some(time.get)
+        }
+      }
+    }
+  }
+
+
 
   // Potential useful libraries:
   // https://github.com/joestelmach/natty
@@ -233,7 +271,7 @@ object ReminderParsing {
    * @param duration
    * @return
    */
-  def getDateTimeFromDuration(duration: String): Option[Duration] = {
+  def getDateTimeFromDuration(duration: String): Option[DateTime] = {
     val parser = new Parser()
     val groups = parser.parse(duration)
 
@@ -246,9 +284,7 @@ object ReminderParsing {
       if (dates.size == 0) {
         None
       } else {
-        val pointInFuture = new DateTime(dates.get(dates.size()-1))
-        val duration = new Duration(DateTime.now, pointInFuture)
-        Some(duration)
+        Some(new DateTime(dates.get(dates.size()-1)))
       }
     }
   }
@@ -299,7 +335,6 @@ object ReminderParsing {
     val date: LocalDate = parseDate(dateString)
 
     date.toDateTime(timeOfDay, timeZone)
-
   }
 
 
@@ -318,6 +353,16 @@ object ReminderParsing {
     }
   }
 
+
+  def isDayOfWeek(str: Option[String]): Boolean= {
+    str match {
+      case Some(day) => daysOfWeek.contains(day.toUpperCase)
+      case None => false
+    }
+  }
+
+
+  val daysOfWeek = Set("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
 
   def getNextDayOfWeek(dayOfWeek: Int) = {
     val d: LocalDate = LocalDate.now().withDayOfWeek(dayOfWeek)

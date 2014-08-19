@@ -166,8 +166,8 @@ class TestMentionParsing extends JUnitSuite {
 
     val mention = "@remindtweets Remind me to go to sleep every day at midnight."
 
-    val data = Map("what"->"go to sleep", "time"->"midnight", "repeat"->"every day")
-    assertParsedProperly(mention, data, List("repeat"))
+    val data = Map("what"->"go to sleep", "time"->"midnight", "repeat"->"day")
+    assertParsedProperly(mention, data, List("when"))
   }
 
 
@@ -175,8 +175,8 @@ class TestMentionParsing extends JUnitSuite {
 
     val mention = "@remindtweets Remind me to eat my lunch every Tuesday at noon."
 
-    val data = Map("what"->"eat my lunch", "time"->"noon", "repeat"->"every Tuesday")
-    assertParsedProperly(mention, data, List("repeat"))
+    val data = Map("what"->"eat my lunch", "time"->"noon", "repeat"->"Tuesday")
+    assertParsedProperly(mention, data, List("when"))
   }
 
 
