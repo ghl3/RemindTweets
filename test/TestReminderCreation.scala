@@ -1,10 +1,10 @@
 
 import helpers.ReminderParsing
+import helpers.ReminderParsing.DateTooEarly
 import models.Repeat
 import org.joda.time._
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
-import play.Logger
 
 
 class TestReminderCreation extends JUnitSuite {
@@ -12,6 +12,13 @@ class TestReminderCreation extends JUnitSuite {
 
   def testTweetCreation(mention: String, what: String, firstTime: DateTime, repeat: Repeat.Value) {
     val parsed = ReminderParsing.createReminderFromTextAndTime(mention, DateTime.now())
+
+    parsed match {
+      case DateTooEarly(time) => println("Time: %s".format(time))
+      case  _ => Unit
+    }
+
+    assert(parsed !== DateTooEarly, "Date should not be before right now")
 
     assert(parsed.isParsedSuccessfully, "Should be parsed successfully")
 
@@ -109,7 +116,7 @@ class TestReminderCreation extends JUnitSuite {
   }
 
 
-  @Test def parsingH() {
+  @Test def createH() {
 
     val mention = "@remindtweets Remind me to go to sleep every day at midnight."
 
@@ -120,7 +127,7 @@ class TestReminderCreation extends JUnitSuite {
   }
 
 
-  @Test def parsingI() {
+  @Test def createI() {
 
     val mention = "@remindtweets Remind me to eat my lunch every Tuesday at noon."
 

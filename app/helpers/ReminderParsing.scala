@@ -1,5 +1,8 @@
 package helpers
 
+
+import helpers.ReminderParsing.DayOfWeek.DayOfWeek
+import helpers.ReminderParsing.RelativeDate.RelativeDate
 import models.Repeat
 import org.joda.time._
 import models.Repeat.Frequency
@@ -23,7 +26,7 @@ object ReminderParsing {
   }
 
   case object Failure extends Parsed
-  case object DateTooEarly extends Parsed
+  case class DateTooEarly(firstTime: DateTime) extends Parsed
   case object InvalidDate extends Parsed
   case object NoWhat extends Parsed
 
@@ -169,7 +172,7 @@ object ReminderParsing {
   def createReminderFromTextAndTime(text: String, time: DateTime) = {
     parseStatusTextWithoutValidation(text, time) match {
       case s: Success if s.firstTime.isAfter(time) => s
-      case s: Success if s.firstTime.isBefore(time) => ReminderParsing.DateTooEarly
+      case s: Success if s.firstTime.isBefore(time) => ReminderParsing.DateTooEarly(s.firstTime)
       case x => x
     }
   }
@@ -238,13 +241,29 @@ object ReminderParsing {
       Some(parseTimeTodayOrTomorrow(time.get))
     }
     else if (date.isDefined) {
-      Some(parseDate(date.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
+      Some(parseNextDate(date.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
     }
     else {
       None
     }
   }
 
+  /*
+  def parseRelativeTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
+    if (time.isDefined && when.isDefined) {
+      Some(parseTimeAndDate(time.get, when.get))
+    }
+    else if (time.isDefined) {
+      Some(parseTimeTodayOrTomorrow(time.get))
+    }
+    else if (when.isDefined) {
+      Some(parseDate(when.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
+    }
+    else {
+      None
+    }
+  }
+*/
 
   def parseRelativeTime(relativeTime: Option[String], createdAt: DateTime): Option[DateTime] = {
     relativeTime match {
@@ -308,37 +327,24 @@ object ReminderParsing {
     }
   }
 
-/*
-  def createDurationBad(duration: String): Duration = {
 
-    val matcher = new Regex("(?i).*(\\d+)\\s+(minute|hour|day|week|month).*",
-      "amount", "duration")
+  /*
+    def createDurationBad(duration: String): Duration = {
 
-    matcher.findFirstMatchIn(duration) match {
-      case Some(group) =>
-        convertRegexToGroupMap(group)
-    }
+      val matcher = new Regex("(?i).*(\\d+)\\s+(minute|hour|day|week|month).*",
+        "amount", "duration")
 
-    Logger.error("Relative time not yet supported: {}", duration)
-    // TODO: Fill this out
-    new Duration
-  }
-*/
+      matcher.findFirstMatchIn(duration) match {
+        case Some(group) =>
+          convertRegexToGroupMap(group)
+      }
 
-  def parseRelativeTime(time: Option[String], when: Option[String]) : Option[DateTime] = {
-    if (time.isDefined && when.isDefined) {
-      Some(parseTimeAndDate(time.get, when.get))
+      Logger.error("Relative time not yet supported: {}", duration)
+      // TODO: Fill this out
+      new Duration
     }
-    else if (time.isDefined) {
-      Some(parseTimeTodayOrTomorrow(time.get))
-    }
-    else if (when.isDefined) {
-      Some(parseDate(when.get).toDateTimeAtStartOfDay.withTime(12,0,0,0))
-    }
-    else {
-      None
-    }
-  }
+  */
+
 
 
   def parseTimeAndDate(timeString: String, dateString: String): DateTime = {
@@ -356,91 +362,149 @@ object ReminderParsing {
         }
     }
 
+
     // Then, parse the date
-    val date: LocalDate = parseDate(dateString)
-
-    date.toDateTime(timeOfDay, timeZone)
-  }
-
-
-  def parseDate(dateString: String): LocalDate = {
-    dateString.toUpperCase match {
-      case "TODAY" => LocalDate.now()
-      case "TOMORROW" => LocalDate.now().plusDays(1)
-      case "MONDAY" => getNextDayOfWeek(DateTimeConstants.MONDAY)
-      case "TUESDAY" => getNextDayOfWeek(DateTimeConstants.TUESDAY)
-      case "WEDNESDAY" => getNextDayOfWeek(DateTimeConstants.WEDNESDAY)
-      case "THURSDAY" => getNextDayOfWeek(DateTimeConstants.THURSDAY)
-      case "FRIDAY" => getNextDayOfWeek(DateTimeConstants.FRIDAY)
-      case "SATURDAY" => getNextDayOfWeek(DateTimeConstants.SATURDAY)
-      case "SUNDAY" => getNextDayOfWeek(DateTimeConstants.SUNDAY)
-      case _ => LocalDate.now()
+    val thing = parseDate(dateString)
+    thing match {
+      case x: RelativeDate.RelativeDate => parseRelativeDate(x).toDateTime(timeOfDay, timeZone)
+      case x: DayOfWeek => getNextDayOfWeekAtTime(x, timeOfDay)
+      case _ => new LocalDate().toDateTime(timeOfDay, timeZone)
     }
   }
 
 
-  def isDayOfWeek(str: Option[String]): Boolean= {
-    str match {
-      case Some(day) => daysOfWeek.contains(day.toUpperCase)
-      case None => false
+  def parseNextDate(dateString: String): LocalDate = {
+    parseDate(dateString) match {
+      case x: RelativeDate.RelativeDate => parseRelativeDate(x)
+      case x: DayOfWeek => getNextDayOfWeek(x.id)
+      case _ => new LocalDate()
     }
   }
 
 
-  val daysOfWeek = Set("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+    def parseRelativeDate(date: RelativeDate.RelativeDate): LocalDate = {
+      date match {
+        case RelativeDate.Today => LocalDate.now.plusDays(0)
+        case RelativeDate.Tomorrow => LocalDate.now.plusDays(1)
+      }
+    }
 
-  def getNextDayOfWeek(dayOfWeek: Int) = {
-    val d: LocalDate = LocalDate.now().withDayOfWeek(dayOfWeek)
-    if (d.isBefore(LocalDate.now())) {
-      d.plusWeeks(1)
-    } else {
-      d
+
+  def getNextDayOfWeekAtTime(day: DayOfWeek, time: LocalTime): DateTime = {
+    getNextDayOfWeek(day.id).toDateTime(time, timeZone) match {
+      case x if x.isBefore(DateTime.now) => x.plusWeeks(1)
+      case x => x
     }
   }
 
-  def parseTimeTodayOrTomorrow(timeString: String): DateTime = {
+  object RelativeDate {
+    sealed abstract trait RelativeDate
+    case object Today extends RelativeDate
+    case object Tomorrow extends RelativeDate
+  }
 
-    val time: LocalTime = parseTwelveHour(timeString).get
+  /*
+    object RelativeDate extends Enumeration {
+      type RelativeDate = RelativeDate.Value
+      val Today, Tomorrow = RelativeDate.Value
+    }
+    */
 
-    // For now, interpret all time zones as LA
-    val timeAtToday = setTime(DateTime.now().withZone(timeZone), time)
+    object DayOfWeek extends Enumeration {
+      type DayOfWeek = Value
+      val Monday = DayOfWeek.Value(DateTimeConstants.MONDAY, "Monday")
+      val Tuesday = DayOfWeek.Value(DateTimeConstants.TUESDAY, "Tuesday")
+      val Wednesday = DayOfWeek.Value(DateTimeConstants.WEDNESDAY, "Wednesday")
+      val Thursday = DayOfWeek.Value(DateTimeConstants.THURSDAY, "Thursday")
+      val Friday = DayOfWeek.Value(DateTimeConstants.FRIDAY, "Friday")
+      val Saturday = DayOfWeek.Value(DateTimeConstants.SATURDAY, "Saturday")
+      val Sunday = DayOfWeek.Value(DateTimeConstants.SUNDAY, "Sunday")
+    }
 
-    if (timeAtToday.isAfter(DateTime.now())) {
-      timeAtToday
-    } else {
-      setTime(DateTime.now().plusDays(1).withZone(timeZone), time)
+
+    def parseDate(dateString: String) = {
+
+      dateString.toUpperCase match {
+        case "TODAY" => RelativeDate.Today //LocalDate.now()
+        case "TOMORROW" => RelativeDate.Tomorrow //LocalDate.now().plusDays(1)
+
+        //case "MONDAY" => getNextDayOfWeek(DateTimeConstants.MONDAY)
+
+        case "MONDAY" => DayOfWeek.Monday //DateTimeConstants.MONDAY
+        case "TUESDAY" => DayOfWeek.Tuesday //DateTimeConstants.TUESDAY
+        case "WEDNESDAY" => DayOfWeek.Wednesday //DateTimeConstants.WEDNESDAY
+        case "THURSDAY" => DayOfWeek.Thursday //   DateTimeConstants.THURSDAY
+        case "FRIDAY" => DayOfWeek.Friday //DateTimeConstants.FRIDAY
+        case "SATURDAY" => DayOfWeek.Saturday //DateTimeConstants.SATURDAY
+        case "SUNDAY" => DayOfWeek.Sunday //DateTimeConstants.SUNDAY
+
+        case _ => None //LocalDate.now()
+      }
+    }
+
+
+    def isDayOfWeek(str: Option[String]): Boolean= {
+      str match {
+        case Some(day) => daysOfWeek.contains(day.toUpperCase)
+        case None => false
+      }
+    }
+
+
+    val daysOfWeek = Set("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+
+    def getNextDayOfWeek(dayOfWeek: Int): LocalDate = {
+      val d: LocalDate = LocalDate.now().withDayOfWeek(dayOfWeek)
+      if (d.isBefore(LocalDate.now())) {
+        d.plusWeeks(1)
+      } else {
+        d
+      }
+    }
+
+    def parseTimeTodayOrTomorrow(timeString: String): DateTime = {
+
+      val time: LocalTime = parseTwelveHour(timeString).get
+
+      // For now, interpret all time zones as LA
+      val timeAtToday = setTime(DateTime.now().withZone(timeZone), time)
+
+      if (timeAtToday.isAfter(DateTime.now())) {
+        timeAtToday
+      } else {
+        setTime(DateTime.now().plusDays(1).withZone(timeZone), time)
+      }
+    }
+
+    def setTime(dateTime: DateTime , time: LocalTime) = {
+      dateTime.withTime(time.getHourOfDay, time.getMinuteOfHour, time.getSecondOfMinute, time.getMillisOfSecond)
+    }
+
+    def parseTwelveHour(time: String): Option[LocalTime] = {
+
+      Logger.info("Parsing Time: {}", time)
+
+      try {
+        return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH:mm")))
+      } catch { case e: java.lang.IllegalArgumentException => }
+
+      try {
+        return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mm aa")))
+      } catch { case e: java.lang.IllegalArgumentException => }
+
+      try {
+        return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mmaa")))
+      } catch { case e: java.lang.IllegalArgumentException => }
+
+      try {
+        return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh")))
+      } catch { case e: java.lang.IllegalArgumentException => }
+
+      try {
+        return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH")))
+      } catch { case e: java.lang.IllegalArgumentException => }
+
+      None
     }
   }
-
-  def setTime(dateTime: DateTime , time: LocalTime) = {
-    dateTime.withTime(time.getHourOfDay, time.getMinuteOfHour, time.getSecondOfMinute, time.getMillisOfSecond)
-  }
-
-  def parseTwelveHour(time: String): Option[LocalTime] = {
-
-    Logger.info("Parsing Time: {}", time)
-
-    try {
-      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH:mm")))
-    } catch { case e: java.lang.IllegalArgumentException => }
-
-    try {
-      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mm aa")))
-    } catch { case e: java.lang.IllegalArgumentException => }
-
-    try {
-      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh:mmaa")))
-    } catch { case e: java.lang.IllegalArgumentException => }
-
-    try {
-      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("hh")))
-    } catch { case e: java.lang.IllegalArgumentException => }
-
-    try {
-      return Some(LocalTime.parse(time, DateTimeFormat.forPattern("HH")))
-    } catch { case e: java.lang.IllegalArgumentException => }
-
-    None
-  }
-}
 
